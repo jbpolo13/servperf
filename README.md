@@ -1,0 +1,699 @@
+[ServPerf-2.html](https://github.com/user-attachments/files/27170007/ServPerf-2.html)
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ServPerf">
+<meta name="theme-color" content="#0e0e0e">
+<title>ServPerf</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--noir:#0e0e0e;--creme:#f5f0e8;--vert:#2c4a2e;--vert-l:#3d6b40;--or:#c9a84c;--gris:#888580;--surf:#1a1a1a;--surf2:#222;--bord:rgba(201,168,76,0.2);--rouge:#e06b6b}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--creme)}
+.app{display:flex;flex-direction:column;height:100vh}
+.login-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;padding:24px}
+.login-logo{font-family:'Cormorant Garamond',serif;font-size:42px;font-weight:700;color:var(--or);letter-spacing:4px;margin-bottom:8px}
+.login-sub{font-size:12px;color:var(--gris);letter-spacing:2px;text-transform:uppercase;margin-bottom:40px}
+.login-box{width:100%;max-width:360px;background:var(--surf);border:0.5px solid var(--bord);border-radius:16px;padding:28px}
+.login-title{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--creme);margin-bottom:20px;text-align:center}
+.flabel{font-size:10px;color:var(--gris);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px;display:block}
+.finput{width:100%;background:var(--surf2);border:0.5px solid var(--bord);border-radius:8px;padding:12px 14px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px}
+.finput:focus{border-color:var(--or)}
+.fselect{width:100%;background:var(--surf2);border:0.5px solid var(--bord);border-radius:8px;padding:12px 14px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:14px;-webkit-appearance:none}
+.btn-primary{width:100%;background:var(--or);border:none;border-radius:10px;padding:14px;color:var(--noir);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.btn-secondary{width:100%;background:transparent;border:0.5px solid var(--bord);border-radius:10px;padding:12px;color:var(--gris);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;margin-top:10px}
+.login-switch{text-align:center;margin-top:16px;font-size:12px;color:var(--gris)}
+.login-switch a{color:var(--or);cursor:pointer}
+.msg-ok{background:rgba(44,74,46,0.3);border:0.5px solid rgba(44,74,46,0.5);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:#7dba82;margin-top:10px}
+.msg-err{background:rgba(180,50,50,0.2);border:0.5px solid rgba(180,50,50,0.4);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--rouge);margin-top:10px}
+.main-app{display:none;flex-direction:column;height:100vh}
+.main-app.on{display:flex}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--bord);background:var(--noir);flex-shrink:0}
+.logo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--or);letter-spacing:2px}
+.nav-right{display:flex;align-items:center;gap:6px}
+.user-badge{font-size:10px;color:var(--gris);border:0.5px solid var(--bord);padding:4px 10px;border-radius:20px}
+.etab-badge{font-size:10px;color:var(--or);border:0.5px solid var(--bord);padding:4px 10px;border-radius:20px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.logout-btn{background:transparent;border:0.5px solid rgba(180,50,50,0.3);border-radius:6px;padding:4px 8px;color:var(--rouge);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.scroll-area{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:80px}
+.page{display:none;padding:16px}
+.page.on{display:block}
+.stitle{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:3px;margin-bottom:14px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.mc{background:var(--surf);border:0.5px solid var(--bord);border-radius:10px;padding:14px}
+.ml{font-size:10px;color:var(--gris);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+.mv{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;color:var(--creme);line-height:1}
+.ms{font-size:10px;color:var(--or);margin-top:3px}
+.panel{background:var(--surf);border:0.5px solid var(--bord);border-radius:10px;padding:14px;margin-bottom:14px}
+.ptitle{font-size:10px;font-weight:500;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px;padding-bottom:10px;border-bottom:0.5px solid var(--bord)}
+.rrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid rgba(255,255,255,0.04)}
+.rrow:last-child{border-bottom:none}
+.rnum{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;min-width:20px;text-align:center}
+.ravatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0}
+.rinfo{flex:1;min-width:0}
+.rname{font-size:13px;font-weight:500}
+.rdet{font-size:10px;color:var(--gris);margin-top:1px}
+.rbar{margin-top:3px;height:3px;background:rgba(255,255,255,0.08);border-radius:2px}
+.rbarf{height:3px;border-radius:2px}
+.rscore{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;flex-shrink:0}
+.catrow{margin-bottom:10px}
+.cath{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px}
+.catn{color:var(--gris)}.catp{color:var(--or);font-weight:500}
+.cattrack{height:3px;background:rgba(255,255,255,0.07);border-radius:2px}
+.catfill{height:3px;border-radius:2px}
+.fcard{border-radius:14px;padding:18px 16px 14px;margin-bottom:14px}
+.fcard.gold{background:#1a1400;border:1px solid rgba(201,168,76,0.5)}
+.fcard.silver{background:#191919;border:1px solid rgba(170,170,170,0.3)}
+.fcard.bronze{background:#150f00;border:1px solid rgba(180,120,50,0.3)}
+.fcard.plain{background:var(--surf);border:0.5px solid var(--bord)}
+.ftop{display:flex;align-items:flex-start;gap:12px;margin-bottom:12px}
+.fbadge{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0}
+.fscore{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:700;line-height:1}
+.fcard.gold .fscore{color:var(--or)}.fcard.silver .fscore{color:#c0c0c0}.fcard.bronze .fscore{color:#cd7f32}.fcard.plain .fscore{color:var(--gris)}
+.fpos{font-size:9px;letter-spacing:2px;text-transform:uppercase;color:var(--gris)}
+.frank{font-size:9px;margin-top:2px;letter-spacing:1px}
+.fcard.gold .frank{color:var(--or)}.fcard.silver .frank{color:#aaa}.fcard.bronze .frank{color:#cd7f32}.fcard.plain .frank{color:var(--gris)}
+.favwrap{flex:1;display:flex;flex-direction:column;align-items:flex-end}
+.favatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:700;border:1.5px solid}
+.fcard.gold .favatar{background:rgba(201,168,76,0.12);border-color:rgba(201,168,76,0.4);color:var(--or)}
+.fcard.silver .favatar{background:rgba(200,200,200,0.08);border-color:rgba(200,200,200,0.3);color:#c0c0c0}
+.fcard.bronze .favatar{background:rgba(180,120,50,0.1);border-color:rgba(180,120,50,0.3);color:#cd7f32}
+.fcard.plain .favatar{background:rgba(255,255,255,0.05);border-color:rgba(255,255,255,0.15);color:var(--gris)}
+.fname{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--creme);text-align:right;margin-top:6px}
+.fdiv{height:0.5px;background:var(--bord);margin:10px 0}
+.fca{text-align:center;margin-bottom:12px}
+.fcal{font-size:9px;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase}
+.fcav{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;color:var(--creme);margin-top:2px}
+.fstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.fstat-num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700}
+.fcard.gold .fstat-num{color:var(--or)}.fcard.silver .fstat-num{color:#c0c0c0}.fcard.bronze .fstat-num{color:#cd7f32}.fcard.plain .fstat-num{color:var(--gris)}
+.fstat-lbl{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:0.8px}
+.minicurve{display:flex;align-items:flex-end;gap:3px;height:28px;margin:10px 0 6px}
+.mbar{border-radius:2px 2px 0 0;flex:1;min-height:4px}
+.ffooter{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
+.ftix{font-size:10px;color:var(--gris)}.ftix span{color:var(--creme);font-weight:500}
+.fregbadge{font-size:9px;padding:2px 8px;border-radius:10px}
+.fcard.gold .fregbadge{background:rgba(201,168,76,0.12);color:var(--or);border:0.5px solid rgba(201,168,76,0.3)}
+.fcard.silver .fregbadge{background:rgba(200,200,200,0.07);color:#aaa;border:0.5px solid rgba(200,200,200,0.2)}
+.fcard.bronze .fregbadge{background:rgba(180,120,50,0.1);color:#cd7f32;border:0.5px solid rgba(180,120,50,0.25)}
+.fcard.plain .fregbadge{background:rgba(255,255,255,0.05);color:var(--gris);border:0.5px solid rgba(255,255,255,0.1)}
+.faward{margin-top:8px;display:flex;gap:5px;flex-wrap:wrap}
+.abadge{font-size:8px;letter-spacing:0.5px;text-transform:uppercase;padding:2px 7px;border-radius:8px;background:rgba(44,74,46,0.4);color:#7dba82;border:0.5px solid rgba(44,74,46,0.6)}
+.srv-card{background:var(--surf);border:0.5px solid var(--bord);border-radius:10px;padding:14px;margin-bottom:12px}
+.srv-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.srv-av{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;flex-shrink:0}
+.srv-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.srv-stat{background:var(--surf2);border-radius:6px;padding:8px;text-align:center}
+.srv-stat-l{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px}
+.srv-stat-v{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700}
+.del-btn{background:rgba(180,50,50,0.15);border:0.5px solid rgba(180,50,50,0.3);border-radius:6px;padding:5px 12px;color:var(--rouge);font-size:11px;cursor:pointer;margin-top:10px;font-family:'DM Sans',sans-serif}
+.frow2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn-add{background:var(--vert);border:none;border-radius:8px;padding:10px 16px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;width:100%;margin-bottom:12px}
+.btn-save{background:var(--or);border:none;border-radius:10px;padding:14px;color:var(--noir);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;margin-top:8px}
+.item-row{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surf2);border-radius:8px;margin-bottom:6px;font-size:12px}
+.item-cat{font-size:9px;padding:2px 8px;border-radius:10px;background:rgba(44,74,46,0.3);color:#7dba82;border:0.5px solid rgba(44,74,46,0.5);flex-shrink:0}
+.item-price{color:var(--or);margin-left:auto;margin-right:6px;flex-shrink:0}
+.item-del{color:var(--gris);cursor:pointer;font-size:16px;flex-shrink:0}
+.etab-selector{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;margin-bottom:16px;-webkit-overflow-scrolling:touch}
+.etab-chip{flex-shrink:0;padding:6px 14px;border-radius:20px;font-size:11px;cursor:pointer;border:0.5px solid var(--bord);background:var(--surf);color:var(--gris);transition:all 0.15s}
+.etab-chip.on{background:var(--vert);color:var(--creme);border-color:var(--vert)}
+.bottom-nav{display:flex;background:var(--surf);border-top:0.5px solid var(--bord);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0)}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;cursor:pointer;color:var(--gris);transition:color 0.15s;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.bnav-item.on{color:var(--or)}
+.bnav-icon{font-size:18px;line-height:1;margin-bottom:3px}
+.bnav-label{font-size:9px;letter-spacing:0.5px;text-transform:uppercase}
+.loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px}
+.loading-logo{font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:var(--or);letter-spacing:4px}
+.dot-wrap{display:flex;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--or);animation:pulse 1.2s infinite}
+.dot:nth-child(2){animation-delay:0.2s}.dot:nth-child(3){animation-delay:0.4s}
+@keyframes pulse{0%,80%,100%{opacity:0.3}40%{opacity:1}}
+.empty{text-align:center;padding:40px 20px;color:var(--gris)}
+.empty-icon{font-size:36px;margin-bottom:12px}
+.empty-title{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--creme);margin-bottom:6px}
+.admin-card{background:var(--surf);border:0.5px solid var(--bord);border-radius:10px;padding:14px;margin-bottom:12px}
+.code-badge{font-family:monospace;font-size:13px;background:rgba(201,168,76,0.1);color:var(--or);border:0.5px solid rgba(201,168,76,0.3);padding:4px 10px;border-radius:6px;display:inline-block;margin-top:6px;letter-spacing:2px}
+.admin-actions{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btn-sm{border:none;border-radius:6px;padding:6px 12px;font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer}
+.btn-sm.green{background:rgba(44,74,46,0.4);color:#7dba82;border:0.5px solid rgba(44,74,46,0.5)}
+.btn-sm.red{background:rgba(180,50,50,0.2);color:var(--rouge);border:0.5px solid rgba(180,50,50,0.3)}
+.btn-sm.gold{background:rgba(201,168,76,0.15);color:var(--or);border:0.5px solid rgba(201,168,76,0.3)}
+.stat-mini-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.stat-mini{background:var(--surf2);border-radius:6px;padding:8px;text-align:center}
+.stat-mini-l{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:2px}
+.stat-mini-v{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700}
+</style>
+</head>
+<body>
+
+<div class="loading" id="loading">
+  <div class="loading-logo">ServPerf</div>
+  <div class="dot-wrap"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+
+<div class="login-screen" id="login-screen" style="display:none">
+  <div class="login-logo">ServPerf</div>
+  <div class="login-sub">Gestion des performances</div>
+  <div class="login-box" id="box-login">
+    <div class="login-title">Connexion</div>
+    <label class="flabel">Votre prénom</label>
+    <input class="finput" id="login-nom" placeholder="ex: Romain">
+    <label class="flabel">Votre code d'accès</label>
+    <input class="finput" id="login-code" placeholder="••••" type="password" maxlength="20">
+    <button class="btn-primary" onclick="connexion()">Se connecter</button>
+    <div class="login-switch">Pas encore de compte ? <a onclick="showRegister()">Créer un compte</a></div>
+    <div id="login-msg"></div>
+  </div>
+  <div class="login-box" id="box-register" style="display:none">
+    <div class="login-title">Nouveau compte</div>
+    <label class="flabel">Code d'invitation</label>
+    <input class="finput" id="reg-invite" placeholder="Code fourni par l'administrateur" maxlength="20">
+    <label class="flabel">Votre prénom</label>
+    <input class="finput" id="reg-nom" placeholder="ex: Romain">
+    <label class="flabel">Choisissez votre code d'accès</label>
+    <input class="finput" id="reg-code" placeholder="••••" type="password" maxlength="20">
+    <label class="flabel">Confirmez votre code</label>
+    <input class="finput" id="reg-code2" placeholder="••••" type="password" maxlength="20">
+    <button class="btn-primary" onclick="inscription()">Créer mon compte</button>
+    <div class="login-switch">Déjà un compte ? <a onclick="showLogin()">Se connecter</a></div>
+    <div id="register-msg"></div>
+  </div>
+</div>
+
+<div class="main-app" id="main-app">
+  <nav class="nav">
+    <div class="logo">ServPerf</div>
+    <div class="nav-right">
+      <div class="etab-badge" id="nav-etab">...</div>
+      <div class="user-badge" id="nav-user">...</div>
+      <button class="logout-btn" onclick="deconnexion()">↩</button>
+    </div>
+  </nav>
+  <div class="scroll-area">
+    <div class="page on" id="page-dash">
+      <div class="stitle">Vue d'ensemble</div>
+      <div class="etab-selector" id="dash-etabs"></div>
+      <div class="mg" id="dash-metrics"></div>
+      <div class="panel"><div class="ptitle">Classement serveurs</div><div id="dash-rank"></div></div>
+      <div class="panel"><div class="ptitle">CA par catégorie</div><div id="dash-cats"></div></div>
+      <div class="panel"><div class="ptitle">Tops de la semaine</div><div id="dash-tops"></div></div>
+    </div>
+    <div class="page" id="page-cartes">
+      <div class="stitle">Cartes de performance</div>
+      <div class="etab-selector" id="cartes-etabs"></div>
+      <div id="cards-list"></div>
+    </div>
+    <div class="page" id="page-saisie">
+      <div class="stitle">Nouveau ticket</div>
+      <label class="flabel">Serveur</label>
+      <select class="fselect" id="t-server"></select>
+      <div class="frow2">
+        <div><label class="flabel">Date</label><input class="finput" type="date" id="t-date"></div>
+        <div><label class="flabel">Couverts</label><input class="finput" type="number" id="t-covers" placeholder="4" min="1"></div>
+      </div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="ptitle">Lignes du ticket</div>
+        <label class="flabel">Produit</label>
+        <input class="finput" id="i-name" placeholder="ex: Mojito, Côte de bœuf...">
+        <div class="frow2">
+          <div><label class="flabel">Quantité</label><input class="finput" type="number" id="i-qty" value="1" min="1"></div>
+          <div><label class="flabel">Prix (€)</label><input class="finput" type="number" id="i-price" placeholder="12.00" step="0.01"></div>
+        </div>
+        <label class="flabel">Catégorie <span style="color:var(--or);font-size:9px">(auto-détectée)</span></label>
+        <select class="fselect" id="i-cat">
+          <option value="cocktail">🍹 Cocktail</option>
+          <option value="vin">🍷 Vin au verre</option>
+          <option value="bouteille">🍾 Bouteille</option>
+          <option value="soft">🥤 Soft</option>
+          <option value="food">🍽️ Food</option>
+          <option value="upsell">⭐ Upsell / Suggestion</option>
+          <option value="dessert">🍮 Dessert</option>
+          <option value="cafe">☕ Café / Digestif</option>
+          <option value="autre">📦 Autre</option>
+        </select>
+        <button class="btn-add" onclick="addItem()">+ Ajouter cette ligne</button>
+        <div id="items-list"></div>
+      </div>
+      <div class="panel" style="margin-bottom:14px">
+        <div class="ptitle">Total</div>
+        <label class="flabel">Montant total (€)</label>
+        <input class="finput" type="number" id="t-total" placeholder="Calculé automatiquement" step="0.01">
+      </div>
+      <button class="btn-save" onclick="saveTicket()">✓ Enregistrer le ticket</button>
+      <div id="save-msg"></div>
+    </div>
+    <div class="page" id="page-serveurs">
+      <div class="stitle">Équipe</div>
+      <div class="panel">
+        <div class="ptitle">Ajouter un serveur</div>
+        <label class="flabel">Prénom</label>
+        <input class="finput" id="new-srv-name" placeholder="ex: Lucas">
+        <button class="btn-add" onclick="addServer()">+ Ajouter à l'équipe</button>
+      </div>
+      <div id="srv-list"></div>
+    </div>
+    <div class="page" id="page-stats">
+      <div class="stitle">Statistiques</div>
+      <div class="etab-selector" id="stats-etabs"></div>
+      <div id="stats-content"></div>
+    </div>
+    <div class="page" id="page-admin">
+      <div class="stitle">👑 Administration</div>
+      <div class="panel">
+        <div class="ptitle">Créer un établissement</div>
+        <label class="flabel">Nom de l'établissement</label>
+        <input class="finput" id="new-etab-nom" placeholder="ex: Le Bistrot du Port">
+        <label class="flabel">Code d'invitation (à donner aux directeurs)</label>
+        <input class="finput" id="new-etab-code" placeholder="ex: PARIS2024" maxlength="20">
+        <button class="btn-add" onclick="addEtab()">+ Créer l'établissement</button>
+        <div id="etab-list"></div>
+      </div>
+      <div class="panel">
+        <div class="ptitle">Utilisateurs</div>
+        <div id="users-list"></div>
+      </div>
+    </div>
+  </div>
+  <nav class="bottom-nav" id="bottom-nav">
+    <button class="bnav-item on" onclick="go('dash',this)"><div class="bnav-icon">⊞</div><div class="bnav-label">Dashboard</div></button>
+    <button class="bnav-item" onclick="go('cartes',this)"><div class="bnav-icon">◈</div><div class="bnav-label">Cartes</div></button>
+    <button class="bnav-item" onclick="go('saisie',this)" style="color:var(--or)"><div class="bnav-icon" style="background:var(--or);color:var(--noir);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:20px;margin-bottom:2px">+</div><div class="bnav-label">Ticket</div></button>
+    <button class="bnav-item" onclick="go('serveurs',this)"><div class="bnav-icon">⊙</div><div class="bnav-label">Équipe</div></button>
+    <button class="bnav-item" onclick="go('stats',this)"><div class="bnav-icon">↗</div><div class="bnav-label">Stats</div></button>
+  </nav>
+</div>
+
+<script>
+const SUPABASE_URL='https://mfqlxrtfpxggwnbhnkps.supabase.co';
+const SUPABASE_KEY='sb_publishable_d4bv-bcGYCQfLoc2ujPz_A_Wnqs1m17';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let USER=null,ETABS=[],CURRENT_ETAB=null,SERVEURS=[],TICKETS=[],ITEMS=[],tempItems=[];
+
+const CATS={
+  cocktail:{label:'Cocktail',color:'#c9a84c',kw:['mojito','spritz','negroni','margarita','daiquiri','gin','rhum','vodka','tequila','whisky','bourbon','martini','aperol','bellini','sangria','caipirinha','manhattan','hugo','kir']},
+  vin:{label:'Vin',color:'#8b5e9a',kw:['vin rouge','vin blanc','vin rosé','verre de vin','bordeaux','bourgogne','rosé','champagne','prosecco','chablis','pichet']},
+  bouteille:{label:'Bouteille',color:'#6b4fa0',kw:['bouteille','magnum','btl','château','domaine']},
+  soft:{label:'Soft',color:'#4a9eb5',kw:['coca','cola','limonade','jus','orange pressée','perrier','eau','vittel','evian','sprite','fanta','schweppes','ginger','tonic','diabolo','ice tea']},
+  food:{label:'Food',color:'#3d6b40',kw:['burger','steak','côte','entrecôte','filet','pavé','saumon','thon','bar','dorade','risotto','pasta','pâtes','pizza','salade','poulet','magret','foie gras','tartare','carpaccio','brochette','formule','planche','frites']},
+  upsell:{label:'Upsell',color:'#e06b6b',kw:['supplément','extra','upgrade','suggestion du chef','fromage','charcuterie']},
+  dessert:{label:'Dessert',color:'#b5844a',kw:['dessert','fondant','tarte','crème brûlée','tiramisu','pannacotta','glace','sorbet','moelleux','coulant','brownie']},
+  cafe:{label:'Café / Digestif',color:'#7a7a7a',kw:['café','espresso','cappuccino','latte','thé','tisane','calvados','armagnac','cognac','digestif','limoncello','grappa','amaretto']},
+  autre:{label:'Autre',color:'#555',kw:[]}
+};
+
+function detectCat(n){const nl=n.toLowerCase();for(const[k,v] of Object.entries(CATS)){if(v.kw.some(kw=>nl.includes(kw)))return k}return 'autre'}
+function fmtEur(n){return Math.round(n).toLocaleString('fr-FR')+' €'}
+function showRegister(){document.getElementById('box-login').style.display='none';document.getElementById('box-register').style.display='block'}
+function showLogin(){document.getElementById('box-register').style.display='none';document.getElementById('box-login').style.display='block'}
+
+async function connexion(){
+  const nom=document.getElementById('login-nom').value.trim();
+  const code=document.getElementById('login-code').value.trim();
+  const msg=document.getElementById('login-msg');
+  if(!nom||!code){msg.innerHTML='<div class="msg-err">Remplis tous les champs</div>';return}
+  if(nom.toLowerCase()==='admin'&&code==='0000'){USER={nom:'Admin',role:'superadmin',etablissement_ids:[]};await lancerApp();return}
+  const{data,error}=await sb.from('utilisateurs').select('*').ilike('nom',nom).eq('code_acces',code).single();
+  if(error||!data){msg.innerHTML='<div class="msg-err">Prénom ou code incorrect</div>';return}
+  USER=data;localStorage.setItem('sp_user',JSON.stringify(USER));await lancerApp();
+}
+
+async function inscription(){
+  const invite=document.getElementById('reg-invite').value.trim();
+  const nom=document.getElementById('reg-nom').value.trim();
+  const code=document.getElementById('reg-code').value.trim();
+  const code2=document.getElementById('reg-code2').value.trim();
+  const msg=document.getElementById('register-msg');
+  if(!invite||!nom||!code||!code2){msg.innerHTML='<div class="msg-err">Remplis tous les champs</div>';return}
+  if(code!==code2){msg.innerHTML='<div class="msg-err">Les codes ne correspondent pas</div>';return}
+  const{data:etab,error:e1}=await sb.from('etablissements').select('*').eq('code_invitation',invite.toUpperCase()).single();
+  if(e1||!etab){msg.innerHTML='<div class="msg-err">Code d\'invitation invalide</div>';return}
+  const{data,error}=await sb.from('utilisateurs').insert({nom,code_acces:code,role:'directeur',etablissement_ids:[etab.id]}).select().single();
+  if(error){msg.innerHTML='<div class="msg-err">Erreur: '+error.message+'</div>';return}
+  USER=data;localStorage.setItem('sp_user',JSON.stringify(USER));
+  msg.innerHTML='<div class="msg-ok">✓ Compte créé ! Connexion...</div>';
+  setTimeout(()=>lancerApp(),1000);
+}
+
+async function lancerApp(){
+  document.getElementById('login-screen').style.display='none';
+  document.getElementById('main-app').classList.add('on');
+  document.getElementById('nav-user').textContent=USER.nom;
+  if(USER.role==='superadmin'){
+    const{data}=await sb.from('etablissements').select('*').order('nom');
+    ETABS=data||[];
+    if(!document.getElementById('bnav-admin')){
+      const btn=document.createElement('button');
+      btn.className='bnav-item';btn.id='bnav-admin';
+      btn.innerHTML='<div class="bnav-icon">👑</div><div class="bnav-label">Admin</div>';
+      btn.onclick=function(){go('admin',this)};
+      document.getElementById('bottom-nav').appendChild(btn);
+    }
+  } else {
+    const ids=USER.etablissement_ids||[];
+    if(ids.length>0){const{data}=await sb.from('etablissements').select('*').in('id',ids);ETABS=data||[]}
+  }
+  CURRENT_ETAB=ETABS[0]||null;
+  document.getElementById('nav-etab').textContent=CURRENT_ETAB?.nom||'Aucun établissement';
+  await chargerDonnees();renderDash();
+}
+
+async function chargerDonnees(){
+  if(!CURRENT_ETAB)return;
+  const now=new Date();const start=new Date(now);start.setDate(start.getDate()-28);
+  const[{data:srv},{data:tix}]=await Promise.all([
+    sb.from('serveurs').select('*').eq('etablissement_id',CURRENT_ETAB.id).order('nom'),
+    sb.from('tickets').select('*').eq('etablissement_id',CURRENT_ETAB.id).gte('date',start.toISOString().split('T')[0])
+  ]);
+  SERVEURS=srv||[];TICKETS=tix||[];
+  const tids=TICKETS.map(t=>t.id);
+  if(tids.length>0){const{data:its}=await sb.from('ticket_items').select('*').in('ticket_id',tids);ITEMS=its||[]}
+  else ITEMS=[];
+}
+
+function deconnexion(){
+  USER=null;ETABS=[];CURRENT_ETAB=null;SERVEURS=[];TICKETS=[];ITEMS=[];
+  localStorage.removeItem('sp_user');
+  document.getElementById('main-app').classList.remove('on');
+  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login-nom').value='';document.getElementById('login-code').value='';
+}
+
+function go(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.bnav-item').forEach(b=>b.classList.remove('on'));
+  document.getElementById('page-'+page).classList.add('on');el.classList.add('on');
+  if(page==='dash')renderDash();
+  if(page==='cartes')renderCartes();
+  if(page==='saisie')renderSaisie();
+  if(page==='serveurs')renderServeurs();
+  if(page==='stats')renderStats();
+  if(page==='admin')renderAdmin();
+  document.querySelector('.scroll-area').scrollTop=0;
+}
+
+function renderEtabs(cid){
+  const el=document.getElementById(cid);
+  if(ETABS.length<=1){el.innerHTML='';return}
+  el.innerHTML=ETABS.map(e=>`<div class="etab-chip${e.id===CURRENT_ETAB?.id?' on':''}" onclick="switchEtab('${e.id}','${cid}')">${e.nom}</div>`).join('');
+}
+
+async function switchEtab(id,cid){
+  CURRENT_ETAB=ETABS.find(e=>e.id===id)||ETABS[0];
+  document.getElementById('nav-etab').textContent=CURRENT_ETAB?.nom||'';
+  await chargerDonnees();
+  if(cid==='dash-etabs')renderDash();
+  else if(cid==='cartes-etabs')renderCartes();
+  else if(cid==='stats-etabs')renderStats();
+}
+
+function getSrvStats(srvId,ds=7,de=0){
+  const now=new Date();
+  const end=new Date(now);end.setDate(end.getDate()-de);
+  const start=new Date(now);start.setDate(start.getDate()-ds);
+  const tix=TICKETS.filter(t=>t.serveur_id===srvId&&new Date(t.date)>=start&&new Date(t.date)<=end);
+  const tids=tix.map(t=>t.id);
+  const its=ITEMS.filter(i=>tids.includes(i.ticket_id));
+  const ca=tix.reduce((s,t)=>s+t.total,0);
+  const avgT=tix.length?Math.round(ca/tix.length):0;
+  const catCA={};Object.keys(CATS).forEach(k=>{catCA[k]=0});
+  its.forEach(i=>{catCA[i.categorie]=(catCA[i.categorie]||0)+i.prix*i.quantite});
+  return{ca,avgT,tix:tix.length,catCA,covers:tix.reduce((s,t)=>s+t.couverts,0)};
+}
+
+function getAllStats(){return SERVEURS.map(s=>({...s,...getSrvStats(s.id)}))}
+
+function calcScore(srv,all){
+  const maxCA=Math.max(...all.map(s=>s.ca),1);
+  const maxAvg=Math.max(...all.map(s=>s.avgT),1);
+  const maxTix=Math.max(...all.map(s=>s.tix),1);
+  const totCA=all.reduce((s,a)=>s+a.ca,0)||1;
+  const n=all.length||1;
+  const cktPct=Math.min((srv.catCA?.cocktail||0)/totCA*100*n,100);
+  const foodPct=Math.min((srv.catCA?.food||0)/totCA*100*n,100);
+  const boutPct=Math.min((srv.catCA?.bouteille||0)/totCA*100*n,100);
+  const upsPct=Math.min((srv.catCA?.upsell||0)/totCA*100*n,100);
+  const reg=(srv.tix/maxTix)*100;
+  const sc=Math.round((srv.ca/maxCA)*100*0.30+(srv.avgT/maxAvg)*100*0.20+cktPct*0.20+foodPct*0.15+boutPct*0.10+reg*0.05);
+  return{score:Math.min(sc,99),cktPct:Math.round(cktPct),foodPct:Math.round(foodPct),boutPct:Math.round(boutPct),upsPct:Math.round(upsPct),reg:Math.round(reg)};
+}
+
+function getTrend(srvId){
+  const c=getSrvStats(srvId,7,0);const p=getSrvStats(srvId,14,7);
+  if(!p.ca)return'→';return c.ca-p.ca>100?'↑':c.ca-p.ca<-100?'↓':'→';
+}
+
+function renderDash(){
+  renderEtabs('dash-etabs');
+  const all=getAllStats();
+  const sorted=[...all].sort((a,b)=>b.ca-a.ca);
+  const totCA=all.reduce((s,a)=>s+a.ca,0);
+  const avgT=all.length?Math.round(all.reduce((s,a)=>s+a.avgT,0)/all.length):0;
+  const totTix=all.reduce((s,a)=>s+a.tix,0);
+  const scored=all.map(s=>({...s,...calcScore(s,all)}));
+  const avgSc=Math.round(scored.reduce((s,a)=>s+a.score,0)/(scored.length||1));
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="mc"><div class="ml">CA Semaine</div><div class="mv">${fmtEur(totCA)}</div><div class="ms">${SERVEURS.length} serveurs</div></div>
+    <div class="mc"><div class="ml">Ticket moyen</div><div class="mv">${avgT}€</div><div class="ms">Objectif 55€</div></div>
+    <div class="mc"><div class="ml">Tickets</div><div class="mv">${totTix}</div><div class="ms">7 derniers jours</div></div>
+    <div class="mc"><div class="ml">Score équipe</div><div class="mv">${avgSc}</div><div class="ms">Moyenne / 100</div></div>`;
+  const rc=['var(--or)','#c0c0c0','#cd7f32'];
+  document.getElementById('dash-rank').innerHTML=sorted.length===0?'<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Aucune donnée</div></div>':
+    sorted.map((s,i)=>{
+      const sc=scored.find(x=>x.id===s.id)||{score:0};
+      const tr=getTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+      const pct=Math.round((s.ca/(totCA||1))*100);
+      return`<div class="rrow">
+        <div class="rnum" style="color:${i<3?rc[i]:'var(--gris)'}">${i+1}</div>
+        <div class="ravatar" style="background:${s.couleur}22;color:${s.couleur};border:1px solid ${s.couleur}44">${s.initiale||s.nom[0]}</div>
+        <div class="rinfo">
+          <div class="rname">${s.nom} <span style="color:${tc}">${tr}</span></div>
+          <div class="rdet">${fmtEur(s.ca)} · ${pct}% équipe</div>
+          <div class="rbar"><div class="rbarf" style="width:${Math.round((s.ca/(sorted[0]?.ca||1))*100)}%;background:${i<3?rc[i]:'var(--vert-l)'}"></div></div>
+        </div>
+        <div class="rscore" style="color:${i<3?rc[i]:'var(--gris)'}">${sc.score}</div>
+      </div>`;
+    }).join('');
+  const totCatCA={};Object.keys(CATS).forEach(k=>{totCatCA[k]=all.reduce((s,a)=>s+(a.catCA[k]||0),0)});
+  const sc2=Object.entries(totCatCA).sort((a,b)=>b[1]-a[1]).filter(([,v])=>v>0);
+  const maxCat=sc2[0]?.[1]||1;
+  document.getElementById('dash-cats').innerHTML=sc2.length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:12px">Aucune donnée</div>':
+    sc2.map(([k,v])=>`<div class="catrow"><div class="cath"><span class="catn">${CATS[k].label}</span><span class="catp">${Math.round((v/(totCA||1))*100)}%</span></div><div class="cattrack"><div class="catfill" style="width:${Math.round((v/maxCat)*100)}%;background:${CATS[k].color}"></div></div></div>`).join('');
+  const bCkt=scored.length?scored.reduce((b,s)=>s.cktPct>b.cktPct?s:b):null;
+  const bFood=scored.length?scored.reduce((b,s)=>s.foodPct>b.foodPct?s:b):null;
+  const bAvg=all.length?[...all].sort((a,b)=>b.avgT-a.avgT)[0]:null;
+  document.getElementById('dash-tops').innerHTML=`
+    <div class="rrow"><div class="rinfo"><div style="font-size:10px;color:var(--gris)">Meilleur cocktail</div><div style="font-size:13px;font-weight:500">${bCkt?.nom||'-'}</div><div style="font-size:10px;color:var(--or)">${bCkt?.cktPct||0}% cocktails</div></div></div>
+    <div class="rrow"><div class="rinfo"><div style="font-size:10px;color:var(--gris)">Meilleur food</div><div style="font-size:13px;font-weight:500">${bFood?.nom||'-'}</div><div style="font-size:10px;color:var(--or)">${bFood?.foodPct||0}% food</div></div></div>
+    <div class="rrow"><div class="rinfo"><div style="font-size:10px;color:var(--gris)">Meilleur ticket moyen</div><div style="font-size:13px;font-weight:500">${bAvg?.nom||'-'}</div><div style="font-size:10px;color:var(--or)">${bAvg?.avgT||0}€ / ticket</div></div></div>`;
+}
+
+function renderCartes(){
+  renderEtabs('cartes-etabs');
+  const all=getAllStats();
+  if(all.length===0){document.getElementById('cards-list').innerHTML='<div class="empty"><div class="empty-icon">◈</div><div class="empty-title">Aucun serveur</div></div>';return}
+  const sorted=[...all].sort((a,b)=>b.ca-a.ca);
+  const cls=['gold','silver','bronze','plain','plain','plain','plain','plain'];
+  document.getElementById('cards-list').innerHTML=sorted.map((s,i)=>{
+    const sc=calcScore(s,all);
+    const tr=getTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+    const wkSc=[];
+    for(let w=3;w>=0;w--){const st=getSrvStats(s.id,7*(w+1),7*w);const aw=SERVEURS.map(srv=>({...srv,...getSrvStats(srv.id,7*(w+1),7*w)}));wkSc.push(calcScore({...s,...st},aw).score)}
+    const mn=Math.min(...wkSc);const mx=Math.max(...wkSc,mn+1);const rng=mx-mn;
+    const bc=i===0?'var(--or)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--vert-l)';
+    const bars=wkSc.map(v=>`<div class="mbar" style="height:${Math.round(6+((v-mn)/rng)*18)}px;background:${bc};opacity:${0.4+((v-mn)/rng)*0.6}"></div>`).join('');
+    const badges=[];
+    if(i===0)badges.push('Best CA');
+    if(sorted.length>1&&s.id===sorted.reduce((b,x)=>calcScore(x,all).cktPct>calcScore(b,all).cktPct?x:b,sorted[0]).id)badges.push('Best cocktail');
+    if(sorted.length>1&&s.id===sorted.reduce((b,x)=>calcScore(x,all).foodPct>calcScore(b,all).foodPct?x:b,sorted[0]).id)badges.push('Best food');
+    return`<div class="fcard ${cls[i]||'plain'}">
+      <div class="ftop">
+        <div class="fbadge"><div class="fscore">${sc.score}</div><div class="fpos">Serveur</div><div class="frank">#${i+1}</div></div>
+        <div class="favwrap"><div class="favatar">${s.initiale||s.nom[0]}</div><div class="fname">${s.nom} <span style="color:${tc};font-size:14px">${tr}</span></div></div>
+      </div>
+      <div class="fdiv"></div>
+      <div class="fca"><div class="fcal">Chiffre d'affaires semaine</div><div class="fcav">${fmtEur(s.ca)}</div></div>
+      <div class="fstats">
+        <div><div class="fstat-num">${sc.cktPct}</div><div class="fstat-lbl">Cocktail</div></div>
+        <div><div class="fstat-num">${sc.foodPct}</div><div class="fstat-lbl">Food</div></div>
+        <div><div class="fstat-num">${sc.boutPct}</div><div class="fstat-lbl">Bouteille</div></div>
+        <div><div class="fstat-num">${sc.upsPct}</div><div class="fstat-lbl">Upsell</div></div>
+        <div><div class="fstat-num">${sc.reg}</div><div class="fstat-lbl">Régularité</div></div>
+        <div><div class="fstat-num">${s.avgT}€</div><div class="fstat-lbl">Moy ticket</div></div>
+      </div>
+      <div class="minicurve">${bars}</div>
+      <div class="ffooter">
+        <div class="ftix">${s.tix} tickets · <span>${s.covers} couverts</span></div>
+        <div class="fregbadge">${tr==='↑'?'En hausse':tr==='↓'?'En baisse':'Stable'}</div>
+      </div>
+      ${badges.length?`<div class="faward">${badges.map(b=>`<div class="abadge">${b}</div>`).join('')}</div>`:''}</div>`;
+  }).join('');
+}
+
+function renderSaisie(){
+  const sel=document.getElementById('t-server');
+  sel.innerHTML=SERVEURS.length===0?'<option>Ajoutez d\'abord un serveur</option>':SERVEURS.map(s=>`<option value="${s.id}">${s.nom}</option>`).join('');
+  document.getElementById('t-date').value=new Date().toISOString().split('T')[0];
+  renderItems();
+}
+
+function addItem(){
+  const name=document.getElementById('i-name').value.trim();if(!name)return;
+  const qty=parseInt(document.getElementById('i-qty').value)||1;
+  const price=parseFloat(document.getElementById('i-price').value)||0;
+  document.getElementById('i-cat').value=detectCat(name);
+  const cat=document.getElementById('i-cat').value;
+  tempItems.push({name,qty,price,cat});
+  document.getElementById('i-name').value='';document.getElementById('i-price').value='';document.getElementById('i-qty').value='1';
+  const tot=tempItems.reduce((s,i)=>s+i.qty*i.price,0);
+  document.getElementById('t-total').value=tot.toFixed(2);
+  renderItems();
+}
+
+function renderItems(){
+  document.getElementById('items-list').innerHTML=tempItems.length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:12px">Aucune ligne ajoutée</div>':
+    tempItems.map((it,i)=>`<div class="item-row">
+      <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.qty}x ${it.name}</span>
+      <span class="item-price">${(it.qty*it.price).toFixed(2)}€</span>
+      <span class="item-cat">${CATS[it.cat]?.label||it.cat}</span>
+      <span class="item-del" onclick="delItem(${i})">✕</span>
+    </div>`).join('');
+}
+
+function delItem(i){tempItems.splice(i,1);const tot=tempItems.reduce((s,i)=>s+i.qty*i.price,0);document.getElementById('t-total').value=tot>0?tot.toFixed(2):'';renderItems()}
+
+async function saveTicket(){
+  const msg=document.getElementById('save-msg');
+  if(!CURRENT_ETAB){msg.innerHTML='<div class="msg-err">Aucun établissement sélectionné</div>';return}
+  const srvId=document.getElementById('t-server').value;
+  const date=document.getElementById('t-date').value;
+  const covers=parseInt(document.getElementById('t-covers').value)||1;
+  const total=parseFloat(document.getElementById('t-total').value)||0;
+  if(!srvId||!date||total<=0){msg.innerHTML='<div class="msg-err">Remplis tous les champs et ajoute au moins une ligne</div>';return}
+  const{data:tix,error}=await sb.from('tickets').insert({serveur_id:srvId,etablissement_id:CURRENT_ETAB.id,date,total,couverts:covers}).select().single();
+  if(error){msg.innerHTML='<div class="msg-err">Erreur: '+error.message+'</div>';return}
+  if(tempItems.length>0){
+    await sb.from('ticket_items').insert(tempItems.map(it=>({ticket_id:tix.id,nom:it.name,categorie:it.cat,quantite:it.qty,prix:it.price})));
+  }
+  await chargerDonnees();
+  tempItems=[];document.getElementById('t-covers').value='';document.getElementById('t-total').value='';
+  renderItems();msg.innerHTML='<div class="msg-ok">✓ Ticket enregistré !</div>';
+  setTimeout(()=>msg.innerHTML='',3000);
+}
+
+function renderServeurs(){
+  const el=document.getElementById('srv-list');
+  if(SERVEURS.length===0){el.innerHTML='<div class="empty"><div class="empty-icon">⊙</div><div class="empty-title">Aucun serveur</div></div>';return}
+  el.innerHTML=SERVEURS.map(s=>{
+    const st=getSrvStats(s.id);const tr=getTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+    return`<div class="srv-card">
+      <div class="srv-top">
+        <div class="srv-av" style="background:${s.couleur}22;color:${s.couleur};border:1.5px solid ${s.couleur}44">${s.initiale||s.nom[0]}</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:500">${s.nom} <span style="color:${tc}">${tr}</span></div><div style="font-size:10px;color:var(--gris)">${st.tix} tickets · ${st.covers} couverts</div></div>
+      </div>
+      <div class="srv-stats">
+        <div class="srv-stat"><div class="srv-stat-l">CA</div><div class="srv-stat-v">${fmtEur(st.ca)}</div></div>
+        <div class="srv-stat"><div class="srv-stat-l">Moy ticket</div><div class="srv-stat-v">${st.avgT}€</div></div>
+        <div class="srv-stat"><div class="srv-stat-l">Tickets</div><div class="srv-stat-v">${st.tix}</div></div>
+      </div>
+      <button class="del-btn" onclick="deleteServer('${s.id}')">Supprimer</button>
+    </div>`;
+  }).join('');
+}
+
+async function addServer(){
+  const name=document.getElementById('new-srv-name').value.trim();if(!name||!CURRENT_ETAB)return;
+  const cols=['#c9a84c','#4a9eb5','#cd7f32','#8b5e9a','#3d6b40','#e06b6b','#7dba82'];
+  const couleur=cols[SERVEURS.length%cols.length];
+  const{data,error}=await sb.from('serveurs').insert({nom:name,couleur,initiale:name[0].toUpperCase(),etablissement_id:CURRENT_ETAB.id}).select().single();
+  if(error){alert('Erreur: '+error.message);return}
+  SERVEURS.push(data);document.getElementById('new-srv-name').value='';renderServeurs();
+}
+
+async function deleteServer(id){
+  if(!confirm('Supprimer ce serveur ?'))return;
+  await sb.from('serveurs').delete().eq('id',id);
+  SERVEURS=SERVEURS.filter(s=>s.id!==id);renderServeurs();
+}
+
+function renderStats(){
+  renderEtabs('stats-etabs');
+  const all=getAllStats();
+  if(all.length===0){document.getElementById('stats-content').innerHTML='<div class="empty"><div class="empty-icon">↗</div><div class="empty-title">Aucune donnée</div></div>';return}
+  const scored=all.map(s=>({...s,...calcScore(s,all)})).sort((a,b)=>b.score-a.score);
+  document.getElementById('stats-content').innerHTML=scored.map((s,i)=>{
+    const tr=getTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+    return`<div class="panel">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;background:${s.couleur}22;color:${s.couleur};border:1.5px solid ${s.couleur}44;flex-shrink:0">${s.initiale||s.nom[0]}</div>
+        <div style="flex:1"><div style="font-size:15px;font-weight:500">${s.nom} <span style="color:${tc}">${tr}</span></div><div style="font-size:10px;color:var(--gris)">Rang #${i+1} · Score ${s.score}/100</div></div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;color:var(--or)">${fmtEur(s.ca)}</div>
+      </div>
+      <div class="stat-mini-grid">
+        ${[['Ticket moy.',s.avgT+'€'],['Tickets',s.tix],['Couverts',s.covers],['Cocktail',s.cktPct+'%'],['Food',s.foodPct+'%'],['Régularité',s.reg+'%']].map(([l,v])=>`<div class="stat-mini"><div class="stat-mini-l">${l}</div><div class="stat-mini-v">${v}</div></div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function renderAdmin(){
+  if(USER.role!=='superadmin')return;
+  const{data:etabs}=await sb.from('etablissements').select('*').order('nom');
+  document.getElementById('etab-list').innerHTML=(etabs||[]).length===0?'<div style="font-size:12px;color:var(--gris);padding:12px">Aucun établissement</div>':
+    (etabs||[]).map(e=>`<div class="admin-card">
+      <div style="font-size:14px;font-weight:500">${e.nom}</div>
+      <div style="font-size:11px;color:var(--gris);margin-top:2px">Code d'invitation :</div>
+      <div class="code-badge">${e.code_invitation}</div>
+      <div class="admin-actions"><button class="btn-sm red" onclick="deleteEtab('${e.id}')">Supprimer</button></div>
+    </div>`).join('');
+  const{data:users}=await sb.from('utilisateurs').select('*').order('nom');
+  document.getElementById('users-list').innerHTML=(users||[]).length===0?'<div style="font-size:12px;color:var(--gris);padding:12px">Aucun utilisateur</div>':
+    (users||[]).map(u=>`<div class="admin-card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div><div style="font-size:14px;font-weight:500">${u.nom}</div><div style="font-size:11px;color:var(--gris)">${u.role==='superadmin'?'👑 Super Admin':u.role==='directeur_multi'?'👔 Multi-établissements':'👤 Directeur'}</div></div>
+        <div class="code-badge">${u.code_acces}</div>
+      </div>
+      ${u.role!=='superadmin'?`<div class="admin-actions"><button class="btn-sm gold" onclick="promoteUser('${u.id}')">Accès multi</button><button class="btn-sm red" onclick="deleteUser('${u.id}')">Supprimer</button></div>`:''}
+    </div>`).join('');
+}
+
+async function addEtab(){
+  const nom=document.getElementById('new-etab-nom').value.trim();
+  const code=document.getElementById('new-etab-code').value.trim().toUpperCase();
+  if(!nom||!code){alert('Remplis tous les champs');return}
+  const{error}=await sb.from('etablissements').insert({nom,code_invitation:code});
+  if(error){alert('Erreur: '+error.message);return}
+  document.getElementById('new-etab-nom').value='';document.getElementById('new-etab-code').value='';
+  const{data}=await sb.from('etablissements').select('*').order('nom');
+  ETABS=data||[];renderAdmin();
+}
+
+async function deleteEtab(id){
+  if(!confirm('Supprimer cet établissement ?'))return;
+  await sb.from('etablissements').delete().eq('id',id);
+  const{data}=await sb.from('etablissements').select('*').order('nom');
+  ETABS=data||[];renderAdmin();
+}
+
+async function deleteUser(id){if(!confirm('Supprimer cet utilisateur ?'))return;await sb.from('utilisateurs').delete().eq('id',id);renderAdmin()}
+async function promoteUser(id){await sb.from('utilisateurs').update({role:'directeur_multi'}).eq('id',id);renderAdmin()}
+
+async function init(){
+  const saved=localStorage.getItem('sp_user');
+  if(saved){
+    try{USER=JSON.parse(saved);await lancerApp();document.getElementById('loading').style.display='none';return}
+    catch(e){localStorage.removeItem('sp_user')}
+  }
+  document.getElementById('loading').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
+init();
+</script>
+</body>
+</html>
