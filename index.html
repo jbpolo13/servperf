@@ -1,16 +1,1044 @@
- UNIQUEMENT en JSON: {"items":[{"nom":"...","qty":1,"prix":0}]}. Si pas de ticket: {"items":[]}'}
-        ]}]})
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="ServPerf">
+<meta name="theme-color" content="#0e0e0e">
+<title>ServPerf</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --noir:#0e0e0e;--creme:#f5f0e8;--vert:#2c4a2e;--vert-l:#3d6b40;
+  --or:#c9a84c;--gris:#888580;--surf:#1a1a1a;--surf2:#222;
+  --bord:rgba(201,168,76,0.2);--rouge:#e06b6b;--bleu:#4a9eb5;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--creme)}
+
+/* LOADING */
+#loading{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px}
+.logo-big{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:700;color:var(--or);letter-spacing:4px}
+.dots{display:flex;gap:6px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--or);animation:dp 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+/* LOGIN */
+#login{display:none;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:20px;overflow-y:auto}
+.ll{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;color:var(--or);letter-spacing:4px;margin-bottom:4px}
+.ls{font-size:11px;color:var(--gris);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px}
+.lbox{width:100%;max-width:340px;background:var(--surf);border:.5px solid var(--bord);border-radius:14px;padding:20px;margin-bottom:12px}
+.lt{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;text-align:center;margin-bottom:14px}
+.rsel{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.rbtn{padding:10px;border-radius:10px;border:.5px solid var(--bord);background:var(--surf2);color:var(--gris);font-size:11px;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;transition:all .15s}
+.rbtn.on{background:var(--vert);color:var(--creme);border-color:var(--vert)}
+.fl{font-size:10px;color:var(--gris);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;display:block}
+.fi{width:100%;background:var(--surf2);border:.5px solid var(--bord);border-radius:8px;padding:10px 12px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:10px}
+.fi:focus{border-color:var(--or)}
+.fsel{width:100%;background:var(--surf2);border:.5px solid var(--bord);border-radius:8px;padding:10px 12px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;margin-bottom:10px;-webkit-appearance:none}
+.bp{width:100%;background:var(--or);border:none;border-radius:10px;padding:13px;color:var(--noir);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.bp.bl{background:var(--bleu)}
+.lsw{text-align:center;margin-top:12px;font-size:12px;color:var(--gris)}
+.lsw a{color:var(--or);cursor:pointer}
+.ok{background:rgba(44,74,46,.3);border:.5px solid rgba(44,74,46,.5);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:#7dba82;margin-top:8px}
+.err{background:rgba(180,50,50,.2);border:.5px solid rgba(180,50,50,.4);border-radius:8px;padding:10px;text-align:center;font-size:12px;color:var(--rouge);margin-top:8px}
+
+/* DIR APP */
+#dir-app{display:none;flex-direction:column;height:100vh}
+#dir-app.on{display:flex}
+.topnav{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:.5px solid var(--bord);background:var(--noir);flex-shrink:0}
+.applogo{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--or);letter-spacing:2px}
+.navr{display:flex;align-items:center;gap:6px}
+.nbadge{font-size:10px;padding:3px 8px;border-radius:20px;border:.5px solid var(--bord)}
+.nbadge.or{color:var(--or)}
+.nbadge.gr{color:var(--gris)}
+.logbtn{background:transparent;border:.5px solid rgba(180,50,50,.3);border-radius:6px;padding:3px 8px;color:var(--rouge);font-size:11px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.scr{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:75px}
+.pg{display:none;padding:14px}
+.pg.on{display:block}
+.st{font-family:'Cormorant Garamond',serif;font-size:11px;font-weight:600;color:var(--or);text-transform:uppercase;letter-spacing:3px;margin-bottom:12px}
+.mg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.mc{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:12px}
+.ml{font-size:9px;color:var(--gris);letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.mv{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700;line-height:1}
+.ms{font-size:9px;color:var(--or);margin-top:2px}
+.panel{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:12px;margin-bottom:12px}
+.ptit{font-size:9px;font-weight:500;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:.5px solid var(--bord)}
+.rrow{display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:.5px solid rgba(255,255,255,.04)}
+.rrow:last-child{border-bottom:none}
+.rn{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;min-width:18px;text-align:center}
+.rav{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0}
+.ri{flex:1;min-width:0}
+.rnm{font-size:12px;font-weight:500}
+.rd{font-size:9px;color:var(--gris);margin-top:1px}
+.rb{margin-top:2px;height:2px;background:rgba(255,255,255,.08);border-radius:2px}
+.rbf{height:2px;border-radius:2px}
+.rsc{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;flex-shrink:0}
+.cr{margin-bottom:8px}
+.ch{display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px}
+.cn{color:var(--gris)}.cp{color:var(--or);font-weight:500}
+.ct{height:3px;background:rgba(255,255,255,.07);border-radius:2px}
+.cf{height:3px;border-radius:2px}
+
+/* FUT CARDS */
+.fc{border-radius:12px;padding:14px 12px 10px;margin-bottom:12px;cursor:pointer;transition:transform .2s}
+.fc:hover{transform:translateY(-2px)}
+.fc.gold{background:#1a1400;border:1px solid rgba(201,168,76,.5)}
+.fc.silver{background:#191919;border:1px solid rgba(170,170,170,.3)}
+.fc.bronze{background:#150f00;border:1px solid rgba(180,120,50,.3)}
+.fc.plain{background:var(--surf);border:.5px solid var(--bord)}
+.fct{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px}
+.fcb{display:flex;flex-direction:column;align-items:center;gap:1px;flex-shrink:0}
+.fcs{font-family:'Cormorant Garamond',serif;font-size:38px;font-weight:700;line-height:1}
+.fc.gold .fcs{color:var(--or)}.fc.silver .fcs{color:#c0c0c0}.fc.bronze .fcs{color:#cd7f32}.fc.plain .fcs{color:var(--gris)}
+.fcp{font-size:8px;letter-spacing:2px;text-transform:uppercase;color:var(--gris)}
+.fcr{font-size:8px;margin-top:1px}
+.fc.gold .fcr{color:var(--or)}.fc.silver .fcr{color:#aaa}.fc.bronze .fcr{color:#cd7f32}.fc.plain .fcr{color:var(--gris)}
+.fcaw{flex:1;display:flex;flex-direction:column;align-items:flex-end}
+.fcav{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:700;border:1.5px solid}
+.fc.gold .fcav{background:rgba(201,168,76,.12);border-color:rgba(201,168,76,.4);color:var(--or)}
+.fc.silver .fcav{background:rgba(200,200,200,.08);border-color:rgba(200,200,200,.3);color:#c0c0c0}
+.fc.bronze .fcav{background:rgba(180,120,50,.1);border-color:rgba(180,120,50,.3);color:#cd7f32}
+.fc.plain .fcav{background:rgba(255,255,255,.05);border-color:rgba(255,255,255,.15);color:var(--gris)}
+.fcnm{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:700;color:var(--creme);text-align:right;margin-top:4px}
+.fcdiv{height:.5px;background:var(--bord);margin:8px 0}
+.fcca{text-align:center;margin-bottom:8px}
+.fccal{font-size:8px;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase}
+.fccav{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--creme);margin-top:1px}
+.fcst{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;text-align:center}
+.fcsn{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700}
+.fc.gold .fcsn{color:var(--or)}.fc.silver .fcsn{color:#c0c0c0}.fc.bronze .fcsn{color:#cd7f32}.fc.plain .fcsn{color:var(--gris)}
+.fcsl{font-size:7px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px}
+.mcrv{display:flex;align-items:flex-end;gap:2px;height:20px;margin:6px 0}
+.mbar{border-radius:2px 2px 0 0;flex:1;min-height:3px}
+.fcft{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+.fctx{font-size:9px;color:var(--gris)}.fctx span{color:var(--creme);font-weight:500}
+.fcrg{font-size:8px;padding:2px 6px;border-radius:10px}
+.fc.gold .fcrg{background:rgba(201,168,76,.12);color:var(--or);border:.5px solid rgba(201,168,76,.3)}
+.fc.silver .fcrg{background:rgba(200,200,200,.07);color:#aaa;border:.5px solid rgba(200,200,200,.2)}
+.fc.bronze .fcrg{background:rgba(180,120,50,.1);color:#cd7f32;border:.5px solid rgba(180,120,50,.25)}
+.fc.plain .fcrg{background:rgba(255,255,255,.05);color:var(--gris);border:.5px solid rgba(255,255,255,.1)}
+.awd{margin-top:6px;display:flex;gap:3px;flex-wrap:wrap}
+.ab{font-size:7px;letter-spacing:.5px;text-transform:uppercase;padding:2px 5px;border-radius:6px;background:rgba(44,74,46,.4);color:#7dba82;border:.5px solid rgba(44,74,46,.6)}
+.comp-bar{margin-top:6px}
+.cb-h{display:flex;justify-content:space-between;font-size:9px;margin-bottom:3px}
+.cb-t{height:3px;background:rgba(255,255,255,.07);border-radius:2px}
+.cb-f{height:3px;border-radius:2px}
+
+/* SERVEURS */
+.scard{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:12px;margin-bottom:10px}
+.scTop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.scav{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;flex-shrink:0}
+.scst{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:8px}
+.scsi{background:var(--surf2);border-radius:6px;padding:7px;text-align:center}
+.scsil{font-size:7px;color:var(--gris);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px}
+.scsiv{font-family:'Cormorant Garamond',serif;font-size:14px;font-weight:700}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+.btncom{background:rgba(201,168,76,.1);border:.5px solid rgba(201,168,76,.3);border-radius:6px;padding:4px 10px;color:var(--or);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+.btndel{background:rgba(180,50,50,.15);border:.5px solid rgba(180,50,50,.3);border-radius:6px;padding:4px 10px;color:var(--rouge);font-size:10px;cursor:pointer;font-family:'DM Sans',sans-serif}
+
+/* TICKET */
+.gr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btnadd{background:var(--vert);border:none;border-radius:8px;padding:9px 14px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;width:100%;margin-bottom:10px}
+.btnsave{background:var(--or);border:none;border-radius:10px;padding:12px;color:var(--noir);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;width:100%;margin-top:6px}
+.btnph{background:var(--surf2);border:.5px solid var(--bord);border-radius:10px;padding:12px;color:var(--creme);font-family:'DM Sans',sans-serif;font-size:12px;cursor:pointer;width:100%;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px}
+.ir{display:flex;align-items:center;gap:6px;padding:7px 8px;background:var(--surf2);border-radius:7px;margin-bottom:5px;font-size:11px}
+.icat{font-size:8px;padding:2px 6px;border-radius:8px;background:rgba(44,74,46,.3);color:#7dba82;border:.5px solid rgba(44,74,46,.5);flex-shrink:0}
+.ipr{color:var(--or);margin-left:auto;margin-right:5px;flex-shrink:0}
+.idel{color:var(--gris);cursor:pointer;font-size:15px;flex-shrink:0}
+
+/* ETAB SEL */
+.esel{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:12px;-webkit-overflow-scrolling:touch}
+.ech{flex-shrink:0;padding:5px 12px;border-radius:20px;font-size:10px;cursor:pointer;border:.5px solid var(--bord);background:var(--surf);color:var(--gris);transition:all .15s}
+.ech.on{background:var(--vert);color:var(--creme);border-color:var(--vert)}
+
+/* BOTTOM NAV */
+.bnav{display:flex;background:var(--surf);border-top:.5px solid var(--bord);flex-shrink:0;padding-bottom:env(safe-area-inset-bottom,0)}
+.bni{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:9px 4px;cursor:pointer;color:var(--gris);transition:color .15s;border:none;background:transparent;font-family:'DM Sans',sans-serif}
+.bni.on{color:var(--or)}
+.bic{font-size:17px;line-height:1;margin-bottom:2px}
+.blb{font-size:8px;letter-spacing:.5px;text-transform:uppercase}
+
+/* ADMIN */
+.cbdg{font-family:monospace;font-size:12px;background:rgba(201,168,76,.1);color:var(--or);border:.5px solid rgba(201,168,76,.3);padding:3px 8px;border-radius:6px;display:inline-block;margin-top:5px;letter-spacing:2px}
+.aact{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.bsm{border:none;border-radius:5px;padding:5px 10px;font-family:'DM Sans',sans-serif;font-size:10px;cursor:pointer}
+.bsm.r{background:rgba(180,50,50,.2);color:var(--rouge);border:.5px solid rgba(180,50,50,.3)}
+.bsm.g{background:rgba(201,168,76,.15);color:var(--or);border:.5px solid rgba(201,168,76,.3)}
+.bsm.b{background:rgba(74,158,181,.15);color:var(--bleu);border:.5px solid rgba(74,158,181,.3)}
+
+/* MODAL */
+.mov{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);z-index:200;display:none;align-items:flex-end;justify-content:center}
+.mov.on{display:flex}
+.mod{background:var(--surf);border:.5px solid var(--bord);border-radius:18px 18px 0 0;padding:20px;width:100%;max-height:85vh;overflow-y:auto}
+.modt{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center}
+.modc{cursor:pointer;color:var(--gris);font-size:20px}
+
+/* EMPTY */
+.emp{text-align:center;padding:36px 16px;color:var(--gris)}
+.empi{font-size:32px;margin-bottom:10px}
+.empt{font-family:'Cormorant Garamond',serif;font-size:18px;color:var(--creme);margin-bottom:5px}
+
+/* ===== STAFF APP ===== */
+#staff-app{display:none;flex-direction:column;height:100vh}
+#staff-app.on{display:flex}
+.shero{background:linear-gradient(180deg,#0a0a1a,var(--noir));padding:14px;flex-shrink:0;border-bottom:.5px solid rgba(74,158,181,.2)}
+.shero-in{display:flex;align-items:flex-end;gap:10px}
+.sinfo{flex:1}
+.sgrt{font-size:9px;color:var(--gris);letter-spacing:1px;text-transform:uppercase;margin-bottom:2px}
+.snm{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:700}
+.srl{display:inline-block;font-size:9px;padding:2px 8px;border-radius:20px;margin-top:3px;letter-spacing:1px;text-transform:uppercase}
+.rl-cdr{background:rgba(201,168,76,.15);color:var(--or);border:.5px solid rgba(201,168,76,.3)}
+.rl-bar{background:rgba(74,158,181,.15);color:var(--bleu);border:.5px solid rgba(74,158,181,.3)}
+.rl-com{background:rgba(139,94,154,.15);color:#8b5e9a;border:.5px solid rgba(139,94,154,.3)}
+.ssc-w{text-align:center;flex-shrink:0}
+.ssc-l{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:1px}
+.ssc-v{font-family:'Cormorant Garamond',serif;font-size:28px;font-weight:700;color:var(--or)}
+.sscr{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:75px}
+.spg{display:none;padding:14px}
+.spg.on{display:block}
+
+/* AVATAR SVG */
+.sav-wrap{flex-shrink:0}
+
+/* WATER */
+.wbox{background:linear-gradient(145deg,#0a1a2e,var(--noir));border:.5px solid rgba(74,158,181,.3);border-radius:14px;padding:16px;margin-bottom:12px;text-align:center}
+.wt{font-size:10px;color:var(--bleu);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.bwrap{display:flex;justify-content:center;margin-bottom:10px}
+.wml{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:700}
+.wgl{font-size:10px;color:var(--gris);margin-top:2px}
+.wbtns{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.wbtn{background:rgba(74,158,181,.15);border:.5px solid rgba(74,158,181,.3);border-radius:7px;padding:8px;color:var(--bleu);font-family:'DM Sans',sans-serif;font-size:11px;cursor:pointer;font-weight:500}
+
+/* NUTRITION */
+.nphbtn{background:linear-gradient(135deg,rgba(44,74,46,.3),rgba(44,74,46,.1));border:.5px solid rgba(44,74,46,.5);border-radius:10px;padding:16px;text-align:center;cursor:pointer;margin-bottom:12px}
+.nbars{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.nbar{background:var(--surf2);border-radius:8px;padding:8px}
+.nbl{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px}
+.nbv{font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700}
+.nbt{height:3px;background:rgba(255,255,255,.07);border-radius:2px;margin-top:4px}
+.nbf{height:3px;border-radius:2px;transition:width .5s}
+.rpcard{background:var(--surf2);border-radius:8px;padding:10px;margin-bottom:6px;display:flex;gap:8px;align-items:center}
+.rpi{flex:1}
+.rpd{font-size:12px;font-weight:500}
+.rpm{font-size:9px;color:var(--gris);margin-top:1px}
+.rpc{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--or);text-align:center}
+
+/* AVATAR PERSO */
+.avbig{display:flex;justify-content:center;margin-bottom:16px}
+.csec{margin-bottom:12px}
+.cst{font-size:9px;color:var(--gris);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:7px}
+.copts{display:flex;gap:6px;flex-wrap:wrap}
+.copt{padding:5px 12px;border-radius:20px;font-size:10px;cursor:pointer;border:.5px solid var(--bord);background:var(--surf2);color:var(--gris);transition:all .15s}
+.copt.on{background:var(--vert);color:var(--creme);border-color:var(--vert)}
+.rwg{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.rwc{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:10px;text-align:center}
+.rwc.ul{border-color:var(--or);background:rgba(201,168,76,.05)}
+.rwc.lk{opacity:.4}
+.rwi{font-size:24px;margin-bottom:4px}
+.rwl{font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:.5px}
+.rwr{font-size:7px;color:var(--or);margin-top:2px}
+
+/* SOS */
+.sosbtn{width:100%;background:linear-gradient(145deg,#8B0000,#cc0000);border:none;border-radius:14px;padding:20px;color:white;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;text-align:center;margin-bottom:12px;animation:sosp 2s infinite}
+@keyframes sosp{0%,100%{box-shadow:0 0 0 0 rgba(204,0,0,.4)}50%{box-shadow:0 0 0 14px rgba(204,0,0,0)}}
+.detc{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:12px;display:flex;align-items:center;gap:10px}
+.detd{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.detd.on{background:#7dba82;box-shadow:0 0 6px rgba(125,186,130,.5)}
+.detd.off{background:var(--rouge)}
+
+/* SANTE */
+.altc{background:rgba(180,50,50,.15);border:.5px solid rgba(180,50,50,.4);border-radius:10px;padding:12px;margin-bottom:8px;display:flex;gap:10px;align-items:center}
+.altc.lu{background:var(--surf);border-color:var(--bord);opacity:.6}
+.sncard{background:var(--surf);border:.5px solid var(--bord);border-radius:10px;padding:12px;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="loading">
+  <div class="logo-big">ServPerf</div>
+  <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+</div>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="ll">ServPerf</div>
+  <div class="ls">Performance & Bien-être</div>
+  <div class="lbox" id="lbox-in">
+    <div class="lt">Connexion</div>
+    <div class="rsel">
+      <div class="rbtn on" id="r-dir" onclick="setR('dir')">👔 Directeur<br><small style="opacity:.6;font-size:9px">/ Manager</small></div>
+      <div class="rbtn" id="r-stf" onclick="setR('stf')">🧑‍🍳 Staff<br><small style="opacity:.6;font-size:9px">CDR / Bar / Commis</small></div>
+    </div>
+    <label class="fl">Prénom</label>
+    <input class="fi" id="l-n" placeholder="ex: Romain">
+    <label class="fl">Code d'accès</label>
+    <input class="fi" id="l-c" placeholder="••••" type="password" maxlength="20">
+    <button class="bp" id="l-btn" onclick="login()">Se connecter</button>
+    <div class="lsw">Pas de compte ? <a onclick="showReg()">S'inscrire</a></div>
+    <div id="l-msg"></div>
+  </div>
+  <div class="lbox" id="lbox-reg" style="display:none">
+    <div class="lt">Créer un compte</div>
+    <label class="fl">Code d'invitation</label>
+    <input class="fi" id="r-inv" placeholder="Code fourni par l'admin">
+    <label class="fl">Prénom</label>
+    <input class="fi" id="r-n" placeholder="ex: Romain">
+    <label class="fl">Rôle</label>
+    <select class="fsel" id="r-role">
+      <option value="directeur">👔 Directeur / Manager</option>
+      <option value="cdr">⭐ Chef de rang</option>
+      <option value="barman">🍸 Barman</option>
+      <option value="commis">👨‍🍳 Commis</option>
+    </select>
+    <label class="fl">Code d'accès</label>
+    <input class="fi" id="r-c" placeholder="••••" type="password" maxlength="20">
+    <label class="fl">Confirmer</label>
+    <input class="fi" id="r-c2" placeholder="••••" type="password" maxlength="20">
+    <button class="bp" onclick="register()">Créer mon compte</button>
+    <div class="lsw">Déjà un compte ? <a onclick="showIn()">Se connecter</a></div>
+    <div id="r-msg"></div>
+  </div>
+</div>
+
+<!-- DIR APP -->
+<div id="dir-app">
+  <nav class="topnav">
+    <div class="applogo">ServPerf</div>
+    <div class="navr">
+      <div class="nbadge or" id="n-etab">...</div>
+      <div class="nbadge gr" id="n-user">...</div>
+      <button class="logbtn" onclick="logout()">↩</button>
+    </div>
+  </nav>
+  <div class="scr">
+
+    <!-- DASHBOARD -->
+    <div class="pg on" id="p-dash">
+      <div class="st">Vue d'ensemble</div>
+      <div class="esel" id="dash-etabs"></div>
+      <div class="mg" id="dash-mg"></div>
+      <div class="panel"><div class="ptit">Classement</div><div id="dash-rank"></div></div>
+      <div class="panel"><div class="ptit">CA par catégorie</div><div id="dash-cats"></div></div>
+      <div class="panel"><div class="ptit">Tops</div><div id="dash-tops"></div></div>
+    </div>
+
+    <!-- CARTES -->
+    <div class="pg" id="p-cartes">
+      <div class="st">Cartes de performance</div>
+      <div class="esel" id="cartes-etabs"></div>
+      <div id="cards-list"></div>
+    </div>
+
+    <!-- TICKET -->
+    <div class="pg" id="p-ticket">
+      <div class="st">Nouveau ticket</div>
+      <button class="btnph" onclick="document.getElementById('ocr-in').click()">📷 Photographier le ticket</button>
+      <input type="file" id="ocr-in" accept="image/*" capture="environment" style="display:none" onchange="handleOCR(event)">
+      <img id="ocr-prev" style="display:none;width:100%;border-radius:8px;margin-bottom:8px;max-height:150px;object-fit:cover">
+      <div id="ocr-st" style="display:none;background:var(--surf2);border-radius:7px;padding:8px;text-align:center;font-size:11px;color:var(--or);margin-bottom:8px"></div>
+      <div style="text-align:center;font-size:10px;color:var(--gris);margin-bottom:8px">— ou saisir manuellement —</div>
+      <label class="fl">Serveur</label>
+      <select class="fsel" id="t-srv"></select>
+      <div class="gr2">
+        <div><label class="fl">Date</label><input class="fi" type="date" id="t-dt"></div>
+        <div><label class="fl">Couverts</label><input class="fi" type="number" id="t-cov" placeholder="4" min="1"></div>
+      </div>
+      <div class="panel" style="margin-bottom:10px">
+        <div class="ptit">Lignes</div>
+        <label class="fl">Produit</label>
+        <input class="fi" id="i-n" placeholder="ex: Mojito, Côte de bœuf...">
+        <div class="gr2">
+          <div><label class="fl">Qté</label><input class="fi" type="number" id="i-q" value="1" min="1"></div>
+          <div><label class="fl">Prix €</label><input class="fi" type="number" id="i-p" placeholder="12" step="0.01"></div>
+        </div>
+        <label class="fl">Catégorie <span style="color:var(--or);font-size:8px">(auto)</span></label>
+        <select class="fsel" id="i-cat">
+          <option value="cocktail">🍹 Cocktail</option><option value="vin">🍷 Vin</option>
+          <option value="bouteille">🍾 Bouteille</option><option value="soft">🥤 Soft</option>
+          <option value="food">🍽️ Food</option><option value="upsell">⭐ Upsell</option>
+          <option value="dessert">🍮 Dessert</option><option value="cafe">☕ Café/Dig.</option>
+          <option value="autre">📦 Autre</option>
+        </select>
+        <button class="btnadd" onclick="addItem()">+ Ajouter ligne</button>
+        <div id="items-list"></div>
+      </div>
+      <div class="panel" style="margin-bottom:10px">
+        <label class="fl">Total €</label>
+        <input class="fi" type="number" id="t-tot" placeholder="Auto-calculé" step="0.01">
+      </div>
+      <button class="btnsave" onclick="saveTicket()">✓ Enregistrer le ticket</button>
+      <div id="t-msg"></div>
+    </div>
+
+    <!-- EQUIPE -->
+    <div class="pg" id="p-equipe">
+      <div class="st">Équipe</div>
+      <div style="display:flex;gap:6px;margin-bottom:12px">
+        <button class="ech on" id="te-s" onclick="switchTeam('s')">Serveurs</button>
+        <button class="ech" id="te-st" onclick="switchTeam('st')">CDR / Bar / Commis</button>
+      </div>
+      <div id="eq-s">
+        <div class="panel"><div class="ptit">Ajouter un serveur</div>
+          <input class="fi" id="nsrv" placeholder="Prénom du serveur">
+          <button class="btnadd" onclick="addSrv()">+ Ajouter</button>
+        </div>
+        <div id="srv-list"></div>
+      </div>
+      <div id="eq-st" style="display:none">
+        <div id="staff-team-list"></div>
+      </div>
+    </div>
+
+    <!-- SANTE -->
+    <div class="pg" id="p-sante">
+      <div class="st">❤️ Santé équipe</div>
+      <div class="panel"><div class="ptit">🆘 Alertes SOS</div><div id="alts-list"></div></div>
+      <div class="panel"><div class="ptit">Hydratation & Nutrition</div><div id="sante-list"></div></div>
+    </div>
+
+    <!-- ADMIN -->
+    <div class="pg" id="p-admin">
+      <div class="st">👑 Administration</div>
+      <div class="panel">
+        <div class="ptit">Créer un établissement</div>
+        <input class="fi" id="ne-n" placeholder="Nom de l'établissement">
+        <input class="fi" id="ne-c" placeholder="Code invitation (ex: PARIS2024)" maxlength="20">
+        <button class="btnadd" onclick="addEtab()">+ Créer</button>
+        <div id="etab-list"></div>
+      </div>
+      <div class="panel">
+        <div class="ptit">🔑 Générer un code directeur</div>
+        <select class="fsel" id="code-sel"></select>
+        <button class="btnadd" onclick="genCode()">Générer un code unique</button>
+        <div id="code-out"></div>
+      </div>
+      <div class="panel"><div class="ptit">Utilisateurs</div><div id="users-list"></div></div>
+    </div>
+
+  </div>
+  <nav class="bnav" id="dir-nav">
+    <button class="bni on" onclick="goDir('dash',this)"><div class="bic">⊞</div><div class="blb">Stats</div></button>
+    <button class="bni" onclick="goDir('cartes',this)"><div class="bic">◈</div><div class="blb">Cartes</div></button>
+    <button class="bni" onclick="goDir('ticket',this)" style="color:var(--or)"><div class="bic" style="background:var(--or);color:var(--noir);border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:2px">+</div><div class="blb">Ticket</div></button>
+    <button class="bni" onclick="goDir('equipe',this)"><div class="bic">⊙</div><div class="blb">Équipe</div></button>
+    <button class="bni" onclick="goDir('sante',this)"><div class="bic">❤️</div><div class="blb">Santé</div></button>
+  </nav>
+</div>
+
+<!-- STAFF APP -->
+<div id="staff-app">
+  <div class="shero">
+    <div class="shero-in">
+      <!-- AVATAR ANIMÉ -->
+      <div class="sav-wrap">
+        <svg id="sav" viewBox="0 0 90 140" width="80" height="112" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="sk" cx="50%" cy="40%" r="60%">
+              <stop offset="0%" stop-color="#d4956a" id="sk0"/>
+              <stop offset="100%" stop-color="#b5713a" id="sk1"/>
+            </radialGradient>
+            <linearGradient id="pg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1a1a2e"/>
+              <stop offset="100%" stop-color="#0d0d1a"/>
+            </linearGradient>
+            <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#f5f0e8" id="sh0"/>
+              <stop offset="100%" stop-color="#e8e0d0" id="sh1"/>
+            </linearGradient>
+          </defs>
+          <ellipse cx="45" cy="138" rx="20" ry="3" fill="rgba(0,0,0,.2)"/>
+          <!-- JAMBES -->
+          <path d="M28 74 L26 110 Q25 115 31 116 L38 116 Q43 115 42 110 L42 74Z" fill="url(#pg)"/>
+          <path d="M48 74 L48 110 Q48 115 54 116 L61 116 Q66 115 64 110 L62 74Z" fill="url(#pg)"/>
+          <!-- NIKE G -->
+          <g transform="translate(13,109)">
+            <ellipse cx="13" cy="11" rx="13" ry="4" fill="#111"/>
+            <path d="M1 9 Q0 4 5 3 L17 2 Q24 1 25 5 L26 8 Q26 10 23 10 L2 10Z" fill="#e8e8e8" id="nkg"/>
+            <path d="M6 3 L5 9 L11 9 L10 2Z" fill="#ddd"/>
+            <path d="M3 7 Q9 4 18 6 Q14 7 9 7Z" fill="#c9a84c" id="swg"/>
+            <line x1="6" y1="3" x2="10" y2="3" stroke="#bbb" stroke-width=".7"/>
+            <line x1="6" y1="5" x2="10" y2="5" stroke="#bbb" stroke-width=".7"/>
+            <line x1="6" y1="7" x2="10" y2="7" stroke="#bbb" stroke-width=".7"/>
+            <rect x="20" y="4" width="5" height="6" rx="1.5" fill="#ddd"/>
+          </g>
+          <!-- NIKE D -->
+          <g transform="translate(47,109)">
+            <ellipse cx="13" cy="11" rx="13" ry="4" fill="#111"/>
+            <path d="M1 9 Q0 4 5 3 L17 2 Q24 1 25 5 L26 8 Q26 10 23 10 L2 10Z" fill="#e8e8e8" id="nkd"/>
+            <path d="M6 3 L5 9 L11 9 L10 2Z" fill="#ddd"/>
+            <path d="M3 7 Q9 4 18 6 Q14 7 9 7Z" fill="#c9a84c" id="swd"/>
+            <line x1="6" y1="3" x2="10" y2="3" stroke="#bbb" stroke-width=".7"/>
+            <line x1="6" y1="5" x2="10" y2="5" stroke="#bbb" stroke-width=".7"/>
+            <line x1="6" y1="7" x2="10" y2="7" stroke="#bbb" stroke-width=".7"/>
+            <rect x="20" y="4" width="5" height="6" rx="1.5" fill="#ddd"/>
+          </g>
+          <!-- CHAUSSETTES -->
+          <rect x="27" y="106" width="15" height="6" rx="2" fill="white" opacity=".9"/>
+          <rect x="49" y="106" width="15" height="6" rx="2" fill="white" opacity=".9"/>
+          <rect x="27" y="106" width="15" height="2" rx="1" fill="#c9a84c" opacity=".4"/>
+          <rect x="49" y="106" width="15" height="2" rx="1" fill="#c9a84c" opacity=".4"/>
+          <!-- TSHIRT -->
+          <path d="M18 38 L11 32 L23 27 L27 36 L63 36 L67 27 L79 32 L72 38 L74 74 L16 74Z" fill="url(#sg)" id="shirt"/>
+          <path d="M27 36 Q45 44 63 36 Q53 31 45 32 Q37 31 27 36Z" fill="rgba(0,0,0,.07)"/>
+          <circle cx="45" cy="54" r="5" fill="rgba(201,168,76,.12)" stroke="rgba(201,168,76,.3)" stroke-width=".5"/>
+          <text x="45" y="57" text-anchor="middle" font-size="4" fill="rgba(201,168,76,.7)" font-weight="bold">SP</text>
+          <!-- BRAS -->
+          <path d="M18 38 L9 42 L6 62 Q5 67 10 68 L16 68 Q21 67 22 62 L23 48 L18 38Z" fill="url(#sk)"/>
+          <path d="M72 38 L81 42 L84 62 Q85 67 80 68 L74 68 Q69 67 68 62 L67 48 L72 38Z" fill="url(#sk)"/>
+          <ellipse cx="10" cy="71" rx="6" ry="6" fill="url(#sk)"/>
+          <ellipse cx="80" cy="71" rx="6" ry="6" fill="url(#sk)"/>
+          <!-- COU -->
+          <rect x="38" y="24" width="14" height="14" rx="4" fill="url(#sk)"/>
+          <!-- TÊTE -->
+          <ellipse cx="45" cy="14" rx="19" ry="20" fill="url(#sk)"/>
+          <!-- OREILLES -->
+          <ellipse cx="26" cy="14" rx="4" ry="5" fill="url(#sk)"/>
+          <ellipse cx="64" cy="14" rx="4" ry="5" fill="url(#sk)"/>
+          <ellipse cx="26" cy="14" rx="2" ry="3" fill="rgba(0,0,0,.1)"/>
+          <ellipse cx="64" cy="14" rx="2" ry="3" fill="rgba(0,0,0,.1)"/>
+          <!-- CHEVEUX -->
+          <ellipse cx="45" cy="1" rx="19" ry="7" fill="#1a0a00"/>
+          <path d="M26 5 Q28 0 45 0 Q62 0 64 5 Q54 2 45 3 Q36 2 26 5Z" fill="#1a0a00"/>
+          <path d="M26 10 Q26 5 28 3 Q27 7 28 11Z" fill="#2a1000" opacity=".7"/>
+          <path d="M64 10 Q64 5 62 3 Q63 7 62 11Z" fill="#2a1000" opacity=".7"/>
+          <!-- SOURCILS -->
+          <path d="M35 8 Q39 5 43 7" stroke="#1a0a00" stroke-width="1.8" fill="none" stroke-linecap="round" id="sbg"/>
+          <path d="M47 7 Q51 5 55 8" stroke="#1a0a00" stroke-width="1.8" fill="none" stroke-linecap="round" id="sbd"/>
+          <!-- YEUX -->
+          <ellipse cx="39" cy="15" rx="5.5" ry="5.5" fill="white"/>
+          <ellipse cx="39" cy="15" rx="3.5" ry="3.5" fill="#4a2800"/>
+          <ellipse cx="39" cy="15" rx="2" ry="2" fill="#1a0a00"/>
+          <ellipse cx="40.2" cy="13.8" rx=".9" ry=".9" fill="white" opacity=".8"/>
+          <ellipse cx="51" cy="15" rx="5.5" ry="5.5" fill="white"/>
+          <ellipse cx="51" cy="15" rx="3.5" ry="3.5" fill="#4a2800"/>
+          <ellipse cx="51" cy="15" rx="2" ry="2" fill="#1a0a00"/>
+          <ellipse cx="52.2" cy="13.8" rx=".9" ry=".9" fill="white" opacity=".8"/>
+          <!-- CLIGN -->
+          <rect x="33" y="11" width="11" height="8" rx="4" fill="url(#sk)" id="cl-g" style="display:none"/>
+          <rect x="45" y="11" width="11" height="8" rx="4" fill="url(#sk)" id="cl-d" style="display:none"/>
+          <!-- NEZ -->
+          <path d="M43 19 Q41 23 42 25 Q45 26 48 25 Q49 23 47 19" fill="none" stroke="rgba(0,0,0,.1)" stroke-width="1.2" stroke-linecap="round"/>
+          <!-- BOUCHE -->
+          <path d="M37 29 Q45 35 53 29" stroke="#8B3A3A" stroke-width="1.8" fill="none" stroke-linecap="round" id="bouche"/>
+          <path d="M38 30 Q45 34 52 30 Q45 32 38 30Z" fill="white" opacity=".4"/>
+        </svg>
+      </div>
+      <div class="sinfo">
+        <div class="sgrt" id="s-grt">Bonjour</div>
+        <div class="snm" id="s-nm">...</div>
+        <div class="srl rl-cdr" id="s-rl">Chef de rang</div>
+      </div>
+      <div class="ssc-w">
+        <div class="ssc-l">Score</div>
+        <div class="ssc-v" id="s-sc">--</div>
+      </div>
+    </div>
+  </div>
+  <div class="sscr">
+
+    <!-- ACCUEIL STAFF -->
+    <div class="spg on" id="sp-home">
+      <div class="st">Mon espace</div>
+      <div class="wbox">
+        <div class="wt">💧 Hydratation du jour</div>
+        <div class="bwrap">
+          <svg width="55" height="110" viewBox="0 0 55 110">
+            <defs>
+              <clipPath id="bc"><path d="M10 20 Q6 24 5 30 L3 95 Q3 104 27 104 Q51 104 52 95 L50 30 Q49 24 45 20Z"/></clipPath>
+              <linearGradient id="wg" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4a9eb5" stop-opacity=".9"/>
+                <stop offset="100%" stop-color="#2a6e85"/>
+              </linearGradient>
+            </defs>
+            <path d="M10 20 Q6 24 5 30 L3 95 Q3 104 27 104 Q51 104 52 95 L50 30 Q49 24 45 20Z" fill="rgba(255,255,255,.04)" stroke="rgba(74,158,181,.4)" stroke-width="1.5"/>
+            <rect x="3" y="0" width="49" height="104" fill="url(#wg)" clip-path="url(#bc)" id="wlv" style="transform:translateY(104px);transition:transform 1s ease"/>
+            <path d="M13 30 Q15 27 17 30 L17 88 Q15 91 13 88Z" fill="rgba(255,255,255,.08)"/>
+            <rect x="18" y="7" width="19" height="15" rx="3" fill="rgba(255,255,255,.05)" stroke="rgba(74,158,181,.3)" stroke-width="1"/>
+            <rect x="20" y="3" width="15" height="7" rx="3" fill="rgba(74,158,181,.5)"/>
+          </svg>
+        </div>
+        <div class="wml" id="w-ml">0 ml</div>
+        <div class="wgl" id="w-gl">Objectif : 2 000 ml</div>
+        <div class="wbtns">
+          <button class="wbtn" onclick="addW(150)">+150ml<br><span style="font-size:8px;opacity:.6">Verre</span></button>
+          <button class="wbtn" onclick="addW(330)">+330ml<br><span style="font-size:8px;opacity:.6">Canette</span></button>
+          <button class="wbtn" onclick="addW(500)">+500ml<br><span style="font-size:8px;opacity:.6">Bouteille</span></button>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="ptit">Ma performance</div>
+        <div id="s-perf"><div style="font-size:11px;color:var(--gris);text-align:center;padding:10px">Chargement...</div></div>
+      </div>
+    </div>
+
+    <!-- NUTRITION -->
+    <div class="spg" id="sp-nutri">
+      <div class="st">Nutrition</div>
+      <div class="nphbtn" onclick="document.getElementById('n-in').click()">
+        <div style="font-size:26px;margin-bottom:5px">📸</div>
+        <div style="font-size:12px;color:var(--vert-l);font-weight:500">Photographier mon repas</div>
+        <div style="font-size:10px;color:var(--gris);margin-top:2px">L'IA calcule les calories automatiquement</div>
+      </div>
+      <input type="file" id="n-in" accept="image/*" capture="environment" style="display:none" onchange="analyseRepas(event)">
+      <div id="n-st" style="display:none" class="ok"></div>
+      <div class="nbars">
+        <div class="nbar"><div class="nbl">Calories</div><div><span class="nbv" id="n-c">0</span><span style="font-size:9px;color:var(--gris)"> kcal</span></div><div class="nbt"><div class="nbf" id="n-cb" style="width:0%;background:#e06b6b"></div></div></div>
+        <div class="nbar"><div class="nbl">Protéines</div><div><span class="nbv" id="n-p">0</span><span style="font-size:9px;color:var(--gris)"> g</span></div><div class="nbt"><div class="nbf" id="n-pb" style="width:0%;background:#4a9eb5"></div></div></div>
+        <div class="nbar"><div class="nbl">Glucides</div><div><span class="nbv" id="n-g">0</span><span style="font-size:9px;color:var(--gris)"> g</span></div><div class="nbt"><div class="nbf" id="n-gb" style="width:0%;background:#c9a84c"></div></div></div>
+        <div class="nbar"><div class="nbl">Lipides</div><div><span class="nbv" id="n-l">0</span><span style="font-size:9px;color:var(--gris)"> g</span></div><div class="nbt"><div class="nbf" id="n-lb" style="width:0%;background:#8b5e9a"></div></div></div>
+      </div>
+      <div class="st" style="margin-top:6px">Mes repas</div>
+      <div id="repas-list"><div style="font-size:11px;color:var(--gris);text-align:center;padding:14px">Aucun repas enregistré</div></div>
+    </div>
+
+    <!-- AVATAR -->
+    <div class="spg" id="sp-avatar">
+      <div class="st">Mon avatar</div>
+      <div class="avbig">
+        <svg viewBox="0 0 90 140" width="140" height="218" fill="none">
+          <use href="#sav"/>
+        </svg>
+      </div>
+      <div class="csec">
+        <div class="cst">Couleur de peau</div>
+        <div class="copts">
+          <div class="copt on" onclick="setSkin(this,'#d4956a','#b5713a')">Mate</div>
+          <div class="copt" onclick="setSkin(this,'#8B5A2B','#6B3E1E')">Foncée</div>
+          <div class="copt" onclick="setSkin(this,'#FDBCB4','#E8967A')">Claire</div>
+        </div>
+      </div>
+      <div class="csec">
+        <div class="cst">Nike</div>
+        <div class="copts">
+          <div class="copt on" onclick="setNike(this,'#e8e8e8','#c9a84c')">Blanc / Or</div>
+          <div class="copt" onclick="setNike(this,'#222','#c9a84c')">Noir / Or</div>
+          <div class="copt" onclick="setNike(this,'#cc2200','white')">Rouge</div>
+          <div class="copt" onclick="setNike(this,'#001f7a','white')">Navy</div>
+        </div>
+      </div>
+      <div class="csec">
+        <div class="cst">T-shirt</div>
+        <div class="copts">
+          <div class="copt on" onclick="setShirt(this,'#f5f0e8','#e8e0d0')">Blanc cassé</div>
+          <div class="copt" onclick="setShirt(this,'#111','#000')">Noir</div>
+          <div class="copt" onclick="setShirt(this,'#2c4a2e','#1a3020')">Vert</div>
+          <div class="copt" onclick="setShirt(this,'#1a2a4a','#0d1a30')">Navy</div>
+        </div>
+      </div>
+      <div class="st" style="margin-top:6px">Récompenses</div>
+      <div class="rwg" id="rw-g"></div>
+    </div>
+
+    <!-- SOS -->
+    <div class="spg" id="sp-sos">
+      <div class="st">Urgence</div>
+      <button class="sosbtn" id="sos-btn" onpointerdown="startSOS()" onpointerup="cancelSOS()" onpointerleave="cancelSOS()">
+        <div style="font-size:28px;margin-bottom:5px">🆘</div>
+        <div>Maintenir 3 secondes pour alerter</div>
+        <div style="font-size:10px;opacity:.7;margin-top:3px">Le directeur et les managers seront prévenus</div>
+        <div style="height:4px;background:rgba(255,255,255,.2);border-radius:2px;margin-top:10px;overflow:hidden">
+          <div id="sos-bar" style="height:100%;width:0%;background:white;transition:width 3s linear;border-radius:2px"></div>
+        </div>
+      </button>
+      <div class="detc">
+        <div class="detd on" id="det-d"></div>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:500">Détection de chute</div>
+          <div style="font-size:10px;color:var(--gris);margin-top:1px" id="det-l">Active — secoue fort le téléphone pour alerter</div>
+        </div>
+        <button class="bsm b" id="det-btn" onclick="toggleDet()">ON</button>
+      </div>
+      <div style="font-size:10px;color:var(--gris);text-align:center;margin-top:12px;line-height:1.6">
+        En cas d'urgence, une alerte avec ton nom et l'heure sera envoyée immédiatement.
+      </div>
+    </div>
+
+  </div>
+  <nav class="bnav">
+    <button class="bni on" onclick="goStaff('home',this)"><div class="bic">🏠</div><div class="blb">Accueil</div></button>
+    <button class="bni" onclick="goStaff('nutri',this)"><div class="bic">🍽️</div><div class="blb">Nutrition</div></button>
+    <button class="bni" onclick="goStaff('avatar',this)"><div class="bic">🎮</div><div class="blb">Avatar</div></button>
+    <button class="bni" onclick="goStaff('sos',this)" style="color:var(--rouge)"><div class="bic">🆘</div><div class="blb">SOS</div></button>
+    <button class="bni" onclick="logout()"><div class="bic">↩</div><div class="blb">Quitter</div></button>
+  </nav>
+</div>
+
+<!-- MODAL COMMENTAIRE -->
+<div class="mov" id="m-com">
+  <div class="mod">
+    <div class="modt">Commentaire <span class="modc" onclick="closeM('m-com')">✕</span></div>
+    <input type="hidden" id="com-sid">
+    <label class="fl">Type</label>
+    <select class="fsel" id="com-type">
+      <option value="positif">✅ Positif</option>
+      <option value="negatif">⚠️ Problème / Amende</option>
+      <option value="neutre">📝 Observation</option>
+    </select>
+    <label class="fl">Commentaire</label>
+    <textarea class="fi" id="com-txt" rows="4" style="resize:none;height:85px" placeholder="Décris la situation..."></textarea>
+    <label class="fl">Note comportement</label>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <input type="range" id="com-note" min="1" max="10" value="7" style="flex:1;accent-color:var(--or)" oninput="document.getElementById('nd').textContent=this.value+'/10'">
+      <span id="nd" style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:700;color:var(--or);min-width:36px">7/10</span>
+    </div>
+    <button class="btnsave" onclick="saveComment()">✓ Enregistrer + résumé IA</button>
+    <div id="com-msg"></div>
+  </div>
+</div>
+
+<script>
+// ===== SUPABASE =====
+const SB = supabase.createClient(
+  'https://mfqlxrtfpxggwnbhnkps.supabase.co',
+  'sb_publishable_d4bv-bcGYCQfLoc2ujPz_A_Wnqs1m17'
+);
+
+// ===== STATE =====
+let U=null, ETABS=[], CE=null, SRVS=[], TIXS=[], ITMS=[], STFU=[];
+let tItems=[], wMl=0, wGoal=2000, repasJ=[], nut={c:0,p:0,g:0,l:0};
+let sosT=null, detOn=false, lastShk=0, lRole='dir';
+
+// ===== CATEGORIES =====
+const CATS = {
+  cocktail:{lb:'Cocktail',cl:'#c9a84c',kw:['mojito','spritz','negroni','margarita','daiquiri','gin','rhum','vodka','tequila','whisky','bourbon','martini','aperol','bellini','sangria','caipirinha','manhattan','hugo','kir','cosmopolitan']},
+  vin:{lb:'Vin',cl:'#8b5e9a',kw:['vin rouge','vin blanc','vin rosé','bordeaux','bourgogne','rosé','champagne','prosecco','chablis','pichet']},
+  bouteille:{lb:'Bouteille',cl:'#6b4fa0',kw:['bouteille','magnum','btl','château','domaine']},
+  soft:{lb:'Soft',cl:'#4a9eb5',kw:['coca','cola','limonade','jus','orange pressée','perrier','eau','vittel','evian','sprite','fanta','schweppes','ginger','tonic','diabolo','ice tea']},
+  food:{lb:'Food',cl:'#3d6b40',kw:['burger','steak','côte','entrecôte','filet','pavé','saumon','thon','bar','dorade','risotto','pasta','pâtes','pizza','salade','poulet','magret','foie gras','tartare','carpaccio','brochette','formule','planche','frites']},
+  upsell:{lb:'Upsell',cl:'#e06b6b',kw:['supplément','extra','upgrade','suggestion du chef','fromage','charcuterie']},
+  dessert:{lb:'Dessert',cl:'#b5844a',kw:['dessert','fondant','tarte','crème brûlée','tiramisu','pannacotta','glace','sorbet','moelleux','coulant','brownie']},
+  cafe:{lb:'Café/Dig.',cl:'#7a7a7a',kw:['café','espresso','cappuccino','latte','thé','tisane','calvados','armagnac','cognac','digestif','limoncello','grappa','amaretto']},
+  autre:{lb:'Autre',cl:'#555',kw:[]}
+};
+
+const RWS = [
+  {id:'j_or',lb:'Jordan Or',ic:'👟',ok:(sc,rk,ca,rg)=>sc>=90,req:'Score 90+'},
+  {id:'veste',lb:'Veste Chef',ic:'👨‍🍳',ok:(sc,rk,ca,rg)=>ca>8000,req:'CA > 8k€'},
+  {id:'montre',lb:'Montre Or',ic:'⌚',ok:(sc,rk,ca,rg)=>sc>=95,req:'Score 95+'},
+  {id:'crown',lb:'Couronne',ic:'👑',ok:(sc,rk,ca,rg)=>rk===1,req:'#1 Équipe'},
+  {id:'star',lb:'Étoile',ic:'⭐',ok:(sc,rk,ca,rg)=>rg>=90,req:'Régularité 90%'},
+  {id:'fire',lb:'En Feu',ic:'🔥',ok:(sc,rk,ca,rg)=>sc>=85,req:'Score 85+'},
+  {id:'diam',lb:'Diamant',ic:'💎',ok:(sc,rk,ca,rg)=>sc>=98,req:'Score 98+'},
+  {id:'trophy',lb:'Trophée',ic:'🏆',ok:(sc,rk,ca,rg)=>rk===1&&sc>=85,req:'#1+85'},
+];
+
+function dcat(n){const nl=n.toLowerCase();for(const[k,v] of Object.entries(CATS)){if(v.kw.some(w=>nl.includes(w)))return k}return'autre'}
+function feur(n){return Math.round(n).toLocaleString('fr-FR')+' €'}
+
+// ===== LOGIN =====
+function setR(r){
+  lRole=r;
+  document.getElementById('r-dir').classList.toggle('on',r==='dir');
+  document.getElementById('r-stf').classList.toggle('on',r==='stf');
+  document.getElementById('l-btn').className='bp'+(r==='stf'?' bl':'');
+}
+function showReg(){document.getElementById('lbox-in').style.display='none';document.getElementById('lbox-reg').style.display='block'}
+function showIn(){document.getElementById('lbox-reg').style.display='none';document.getElementById('lbox-in').style.display='block'}
+
+async function login(){
+  const nom=document.getElementById('l-n').value.trim();
+  const code=document.getElementById('l-c').value.trim();
+  const msg=document.getElementById('l-msg');
+  if(!nom||!code){msg.innerHTML='<div class="err">Remplis tous les champs</div>';return}
+  if(nom.toLowerCase()==='admin'&&code==='0000'){
+    U={nom:'Admin',role:'superadmin',etablissement_ids:[],_t:'dir'};
+    await startDir();return;
+  }
+  if(lRole==='dir'){
+    const{data,error}=await SB.from('utilisateurs').select('*').ilike('nom',nom).eq('code_acces',code).single();
+    if(error||!data){msg.innerHTML='<div class="err">Prénom ou code incorrect</div>';return}
+    U={...data,_t:'dir'};localStorage.setItem('spU',JSON.stringify(U));await startDir();
+  } else {
+    const{data,error}=await SB.from('staff').select('*').ilike('nom',nom).eq('code_acces',code).single();
+    if(error||!data){msg.innerHTML='<div class="err">Prénom ou code incorrect</div>';return}
+    U={...data,_t:'stf'};localStorage.setItem('spU',JSON.stringify(U));await startStaff();
+  }
+}
+
+async function register(){
+  const inv=document.getElementById('r-inv').value.trim().toUpperCase();
+  const nom=document.getElementById('r-n').value.trim();
+  const role=document.getElementById('r-role').value;
+  const code=document.getElementById('r-c').value.trim();
+  const code2=document.getElementById('r-c2').value.trim();
+  const msg=document.getElementById('r-msg');
+  if(!inv||!nom||!code||!code2){msg.innerHTML='<div class="err">Remplis tous les champs</div>';return}
+  if(code!==code2){msg.innerHTML='<div class="err">Les codes ne correspondent pas</div>';return}
+  const{data:etab,error:e1}=await SB.from('etablissements').select('*').eq('code_invitation',inv).single();
+  if(e1||!etab){msg.innerHTML='<div class="err">Code invalide</div>';return}
+  const isStaff=['cdr','barman','commis'].includes(role);
+  if(isStaff){
+    const{data,error}=await SB.from('staff').insert({nom,code_acces:code,role,etablissement_id:etab.id,eau_ml:0,calories_jour:0}).select().single();
+    if(error){msg.innerHTML='<div class="err">'+error.message+'</div>';return}
+    U={...data,_t:'stf'};
+  } else {
+    const{data,error}=await SB.from('utilisateurs').insert({nom,code_acces:code,role:'directeur',etablissement_ids:[etab.id]}).select().single();
+    if(error){msg.innerHTML='<div class="err">'+error.message+'</div>';return}
+    U={...data,_t:'dir'};
+  }
+  localStorage.setItem('spU',JSON.stringify(U));
+  msg.innerHTML='<div class="ok">✓ Compte créé !</div>';
+  setTimeout(()=>U._t==='stf'?startStaff():startDir(),1000);
+}
+
+function logout(){
+  U=null;ETABS=[];CE=null;SRVS=[];TIXS=[];ITMS=[];STFU=[];tItems=[];
+  wMl=0;repasJ=[];nut={c:0,p:0,g:0,l:0};
+  localStorage.removeItem('spU');
+  document.getElementById('dir-app').classList.remove('on');
+  document.getElementById('staff-app').classList.remove('on');
+  document.getElementById('login').style.display='flex';
+  document.getElementById('l-n').value='';document.getElementById('l-c').value='';
+}
+
+// ===== DIR APP =====
+async function startDir(){
+  document.getElementById('login').style.display='none';
+  document.getElementById('dir-app').classList.add('on');
+  document.getElementById('n-user').textContent=U.nom;
+  if(U.role==='superadmin'){
+    const{data}=await SB.from('etablissements').select('*').order('nom');
+    ETABS=data||[];
+    if(!document.getElementById('bni-adm')){
+      const b=document.createElement('button');
+      b.className='bni';b.id='bni-adm';
+      b.innerHTML='<div class="bic">👑</div><div class="blb">Admin</div>';
+      b.onclick=function(){goDir('admin',this)};
+      document.getElementById('dir-nav').appendChild(b);
+    }
+  } else {
+    const ids=U.etablissement_ids||[];
+    if(ids.length){const{data}=await SB.from('etablissements').select('*').in('id',ids);ETABS=data||[]}
+  }
+  CE=ETABS[0]||null;
+  document.getElementById('n-etab').textContent=CE?.nom||'Aucun';
+  await loadData();renderDash();
+}
+
+async function loadData(){
+  if(!CE)return;
+  const now=new Date();const st=new Date(now);st.setDate(st.getDate()-28);
+  const[{data:srv},{data:tix},{data:stf}]=await Promise.all([
+    SB.from('serveurs').select('*').eq('etablissement_id',CE.id).order('nom'),
+    SB.from('tickets').select('*').eq('etablissement_id',CE.id).gte('date',st.toISOString().split('T')[0]),
+    SB.from('staff').select('*').eq('etablissement_id',CE.id).order('nom')
+  ]);
+  SRVS=srv||[];TIXS=tix||[];STFU=stf||[];
+  const tids=TIXS.map(t=>t.id);
+  if(tids.length){const{data:its}=await SB.from('ticket_items').select('*').in('ticket_id',tids);ITMS=its||[]}
+  else ITMS=[];
+}
+
+function goDir(pg,el){
+  document.querySelectorAll('#dir-app .pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('#dir-nav .bni').forEach(b=>b.classList.remove('on'));
+  document.getElementById('p-'+pg).classList.add('on');el.classList.add('on');
+  if(pg==='dash')renderDash();
+  if(pg==='cartes')renderCartes();
+  if(pg==='ticket')renderTicket();
+  if(pg==='equipe'){renderSrvs();renderStaffTeam();}
+  if(pg==='sante')renderSante();
+  if(pg==='admin')renderAdmin();
+  document.querySelector('.scr').scrollTop=0;
+}
+
+function switchTeam(t){
+  document.getElementById('eq-s').style.display=t==='s'?'block':'none';
+  document.getElementById('eq-st').style.display=t==='st'?'block':'none';
+  document.getElementById('te-s').classList.toggle('on',t==='s');
+  document.getElementById('te-st').classList.toggle('on',t==='st');
+}
+
+function renderEtabs(id){
+  const el=document.getElementById(id);if(!el||ETABS.length<=1){if(el)el.innerHTML='';return}
+  el.innerHTML=ETABS.map(e=>`<div class="ech${e.id===CE?.id?' on':''}" onclick="swEtab('${e.id}','${id}')">${e.nom}</div>`).join('');
+}
+
+async function swEtab(id,cid){
+  CE=ETABS.find(e=>e.id===id)||ETABS[0];
+  document.getElementById('n-etab').textContent=CE?.nom||'';
+  await loadData();
+  if(cid==='dash-etabs')renderDash();
+  else if(cid==='cartes-etabs')renderCartes();
+}
+
+// ===== STATS ENGINE =====
+function gStat(sid,ds=7,de=0){
+  const now=new Date();
+  const end=new Date(now);end.setDate(end.getDate()-de);
+  const start=new Date(now);start.setDate(start.getDate()-ds);
+  const tix=TIXS.filter(t=>t.serveur_id===sid&&new Date(t.date)>=start&&new Date(t.date)<=end);
+  const tids=tix.map(t=>t.id);
+  const its=ITMS.filter(i=>tids.includes(i.ticket_id));
+  const ca=tix.reduce((s,t)=>s+t.total,0);
+  const avgT=tix.length?Math.round(ca/tix.length):0;
+  const catCA={};Object.keys(CATS).forEach(k=>{catCA[k]=0});
+  its.forEach(i=>{catCA[i.categorie]=(catCA[i.categorie]||0)+i.prix*i.quantite});
+  return{ca,avgT,tix:tix.length,catCA,covers:tix.reduce((s,t)=>s+t.couverts,0)};
+}
+
+function gAll(){return SRVS.map(s=>({...s,...gStat(s.id)}))}
+
+function calcSc(srv,all){
+  const mCA=Math.max(...all.map(s=>s.ca),1);
+  const mAv=Math.max(...all.map(s=>s.avgT),1);
+  const mTx=Math.max(...all.map(s=>s.tix),1);
+  const tCA=all.reduce((s,a)=>s+a.ca,0)||1;
+  const n=all.length||1;
+  const ck=Math.min((srv.catCA?.cocktail||0)/tCA*100*n,100);
+  const fd=Math.min((srv.catCA?.food||0)/tCA*100*n,100);
+  const bt=Math.min((srv.catCA?.bouteille||0)/tCA*100*n,100);
+  const up=Math.min((srv.catCA?.upsell||0)/tCA*100*n,100);
+  const rg=(srv.tix/mTx)*100;
+  const cp=((srv.note_comportement||10)/10)*100;
+  const sc=Math.round((srv.ca/mCA)*100*.25+(srv.avgT/mAv)*100*.20+ck*.18+fd*.12+bt*.08+rg*.07+cp*.10);
+  return{score:Math.min(sc,99),ck:Math.round(ck),fd:Math.round(fd),bt:Math.round(bt),up:Math.round(up),rg:Math.round(rg)};
+}
+
+function gTrend(sid){
+  const c=gStat(sid,7,0);const p=gStat(sid,14,7);
+  if(!p.ca)return'→';return c.ca-p.ca>100?'↑':c.ca-p.ca<-100?'↓':'→';
+}
+
+// ===== DASHBOARD =====
+function renderDash(){
+  renderEtabs('dash-etabs');
+  const all=gAll();const srt=[...all].sort((a,b)=>b.ca-a.ca);
+  const tCA=all.reduce((s,a)=>s+a.ca,0);
+  const aT=all.length?Math.round(all.reduce((s,a)=>s+a.avgT,0)/all.length):0;
+  const tTx=all.reduce((s,a)=>s+a.tix,0);
+  const scd=all.map(s=>({...s,...calcSc(s,all)}));
+  const aSc=Math.round(scd.reduce((s,a)=>s+a.score,0)/(scd.length||1));
+  document.getElementById('dash-mg').innerHTML=`
+    <div class="mc"><div class="ml">CA Semaine</div><div class="mv">${feur(tCA)}</div><div class="ms">${SRVS.length} serveurs</div></div>
+    <div class="mc"><div class="ml">Ticket moyen</div><div class="mv">${aT}€</div><div class="ms">Objectif 55€</div></div>
+    <div class="mc"><div class="ml">Tickets</div><div class="mv">${tTx}</div><div class="ms">Cette semaine</div></div>
+    <div class="mc"><div class="ml">Score équipe</div><div class="mv">${aSc}</div><div class="ms">/ 100</div></div>`;
+  const rc=['var(--or)','#c0c0c0','#cd7f32'];
+  document.getElementById('dash-rank').innerHTML=srt.length===0?'<div class="emp"><div class="empi">📊</div><div class="empt">Aucune donnée</div></div>':
+    srt.map((s,i)=>{
+      const sc=scd.find(x=>x.id===s.id)||{score:0};
+      const tr=gTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+      return`<div class="rrow">
+        <div class="rn" style="color:${i<3?rc[i]:'var(--gris)'}">${i+1}</div>
+        <div class="rav" style="background:${s.couleur}22;color:${s.couleur};border:1px solid ${s.couleur}44">${s.initiale||s.nom[0]}</div>
+        <div class="ri">
+          <div class="rnm">${s.nom} <span style="color:${tc}">${tr}</span></div>
+          <div class="rd">${feur(s.ca)} · ${s.tix} tickets</div>
+          <div class="rb"><div class="rbf" style="width:${Math.round((s.ca/(srt[0]?.ca||1))*100)}%;background:${i<3?rc[i]:'var(--vert-l)'}"></div></div>
+        </div>
+        <div class="rsc" style="color:${i<3?rc[i]:'var(--gris)'}">${sc.score}</div>
+      </div>`;
+    }).join('');
+  const tCC={};Object.keys(CATS).forEach(k=>{tCC[k]=all.reduce((s,a)=>s+(a.catCA[k]||0),0)});
+  const sc2=Object.entries(tCC).sort((a,b)=>b[1]-a[1]).filter(([,v])=>v>0);
+  const mCat=sc2[0]?.[1]||1;
+  document.getElementById('dash-cats').innerHTML=sc2.map(([k,v])=>`<div class="cr"><div class="ch"><span class="cn">${CATS[k].lb}</span><span class="cp">${Math.round((v/(tCA||1))*100)}%</span></div><div class="ct"><div class="cf" style="width:${Math.round((v/mCat)*100)}%;background:${CATS[k].cl}"></div></div></div>`).join('');
+  const bCk=scd.length?scd.reduce((b,s)=>s.ck>b.ck?s:b):null;
+  const bFd=scd.length?scd.reduce((b,s)=>s.fd>b.fd?s:b):null;
+  const bAv=all.length?[...all].sort((a,b)=>b.avgT-a.avgT)[0]:null;
+  document.getElementById('dash-tops').innerHTML=`
+    <div class="rrow"><div class="ri"><div style="font-size:9px;color:var(--gris)">Meilleur cocktail</div><div class="rnm">${bCk?.nom||'-'}</div><div style="font-size:9px;color:var(--or)">${bCk?.ck||0}%</div></div></div>
+    <div class="rrow"><div class="ri"><div style="font-size:9px;color:var(--gris)">Meilleur food</div><div class="rnm">${bFd?.nom||'-'}</div><div style="font-size:9px;color:var(--or)">${bFd?.fd||0}%</div></div></div>
+    <div class="rrow"><div class="ri"><div style="font-size:9px;color:var(--gris)">Meilleur ticket moyen</div><div class="rnm">${bAv?.nom||'-'}</div><div style="font-size:9px;color:var(--or)">${bAv?.avgT||0}€</div></div></div>`;
+}
+
+// ===== CARTES FUT =====
+function renderCartes(){
+  renderEtabs('cartes-etabs');
+  const all=gAll();
+  if(!all.length){document.getElementById('cards-list').innerHTML='<div class="emp"><div class="empi">◈</div><div class="empt">Aucun serveur</div></div>';return}
+  const srt=[...all].sort((a,b)=>b.ca-a.ca);
+  const cls=['gold','silver','bronze','plain','plain','plain','plain'];
+  document.getElementById('cards-list').innerHTML=srt.map((s,i)=>{
+    const sc=calcSc(s,all);
+    const tr=gTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+    const wkS=[];
+    for(let w=3;w>=0;w--){
+      const st=gStat(s.id,7*(w+1),7*w);
+      const aw=SRVS.map(sr=>({...sr,...gStat(sr.id,7*(w+1),7*w)}));
+      wkS.push(calcSc({...s,...st},aw).score);
+    }
+    const mn=Math.min(...wkS);const mx=Math.max(...wkS,mn+1);const rng=mx-mn;
+    const bc=i===0?'var(--or)':i===1?'#c0c0c0':i===2?'#cd7f32':'var(--vert-l)';
+    const bars=wkS.map(v=>`<div class="mbar" style="height:${Math.round(4+((v-mn)/rng)*16)}px;background:${bc};opacity:${0.4+((v-mn)/rng)*0.6}"></div>`).join('');
+    const rws=RWS.filter(r=>r.ok(sc.score,i+1,s.ca,sc.rg));
+    const compC=sc.score>=80?'#7dba82':sc.score>=50?'var(--or)':'var(--rouge)';
+    return`<div class="fc ${cls[i]||'plain'}">
+      <div class="fct">
+        <div class="fcb"><div class="fcs">${sc.score}</div><div class="fcp">Serveur</div><div class="fcr">#${i+1}</div></div>
+        <div class="fcaw">
+          <div class="fcav">${rws[0]?.ic||s.initiale||s.nom[0]}</div>
+          <div class="fcnm">${s.nom} <span style="color:${tc};font-size:11px">${tr}</span></div>
+        </div>
+      </div>
+      <div class="fcdiv"></div>
+      <div class="fcca"><div class="fccal">CA Semaine</div><div class="fccav">${feur(s.ca)}</div></div>
+      <div class="fcst">
+        <div><div class="fcsn">${sc.ck}</div><div class="fcsl">Cocktail</div></div>
+        <div><div class="fcsn">${sc.fd}</div><div class="fcsl">Food</div></div>
+        <div><div class="fcsn">${sc.bt}</div><div class="fcsl">Bouteille</div></div>
+        <div><div class="fcsn">${sc.up}</div><div class="fcsl">Upsell</div></div>
+        <div><div class="fcsn">${sc.rg}</div><div class="fcsl">Régularité</div></div>
+        <div><div class="fcsn">${s.avgT}€</div><div class="fcsl">Moy.</div></div>
+      </div>
+      <div class="comp-bar">
+        <div class="cb-h"><span style="font-size:8px;color:var(--gris)">Comportement</span><span style="font-size:9px;color:${compC}">${s.note_comportement||10}/10</span></div>
+        <div class="cb-t"><div class="cb-f" style="width:${((s.note_comportement||10)/10)*100}%;background:${compC}"></div></div>
+      </div>
+      <div class="mcrv">${bars}</div>
+      <div class="fcft">
+        <div class="fctx">${s.tix} tickets · <span>${s.covers} couverts</span></div>
+        <div class="fcrg">${tr==='↑'?'En hausse':tr==='↓'?'En baisse':'Stable'}</div>
+      </div>
+      ${rws.length?`<div class="awd">${rws.map(r=>`<div class="ab">${r.ic} ${r.lb}</div>`).join('')}</div>`:''}
+      <div style="margin-top:6px"><button class="bsm g" onclick="event.stopPropagation();openCom('${s.id}')">+ Commentaire</button></div>
+    </div>`;
+  }).join('');
+}
+
+// ===== TICKET =====
+function renderTicket(){
+  const sel=document.getElementById('t-srv');
+  sel.innerHTML=SRVS.length===0?'<option>Ajoutez d\'abord un serveur</option>':SRVS.map(s=>`<option value="${s.id}">${s.nom}</option>`).join('');
+  document.getElementById('t-dt').value=new Date().toISOString().split('T')[0];
+  renderItems();
+}
+
+async function handleOCR(e){
+  const file=e.target.files[0];if(!file)return;
+  const prev=document.getElementById('ocr-prev');const st=document.getElementById('ocr-st');
+  prev.src=URL.createObjectURL(file);prev.style.display='block';
+  st.style.display='block';st.textContent='🔍 Lecture du ticket en cours...';st.style.color='var(--or)';
+  try{
+    const rd=new FileReader();
+    rd.onload=async(ev)=>{
+      const b64=ev.target.result.split(',')[1];
+      const res=await fetch('https://api.anthropic.com/v1/messages',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+            {type:'text',text:'Lis ce ticket de restaurant. Réponds UNIQUEMENT en JSON valide: {"items":[{"nom":"...","qty":1,"prix":0}]}. Si pas de ticket visible: {"items":[]}'}
+          ]}]})
       });
       const data=await res.json();
       try{
-        const p=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
-        const items=p.items||[];
-        if(items.length>0){
-          tItems=items.map(it=>({name:it.nom||'Produit',qty:it.qty||1,price:it.prix||0,cat:dcat(it.nom||'')}));
+        const txt=data.content?.[0]?.text||'{}';
+        const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+        if(p.items?.length){
+          tItems=p.items.map(it=>({name:it.nom||'Produit',qty:it.qty||1,price:it.prix||0,cat:dcat(it.nom||'')}));
           renderItems();
           const tot=tItems.reduce((s,i)=>s+i.qty*i.price,0);
-          if(tot>0)document.getElementById('t-total').value=tot.toFixed(2);
-          st.textContent=`✓ ${items.length} ligne(s) détectée(s)`;st.style.color='#7dba82';
+          if(tot>0)document.getElementById('t-tot').value=tot.toFixed(2);
+          st.textContent=`✓ ${p.items.length} ligne(s) détectée(s) — vérifie et corrige`;st.style.color='#7dba82';
         } else {st.textContent='⚠️ Non reconnu, saisis manuellement';st.style.color='var(--rouge)';}
       }catch(err){st.textContent='⚠️ Erreur de lecture';st.style.color='var(--rouge)';}
     };
@@ -19,113 +1047,112 @@
 }
 
 function addItem(){
-  const name=document.getElementById('i-name').value.trim();if(!name)return;
-  const qty=parseInt(document.getElementById('i-qty').value)||1;
-  const price=parseFloat(document.getElementById('i-price').value)||0;
+  const name=document.getElementById('i-n').value.trim();if(!name)return;
+  const qty=parseInt(document.getElementById('i-q').value)||1;
+  const price=parseFloat(document.getElementById('i-p').value)||0;
   document.getElementById('i-cat').value=dcat(name);
-  const cat=document.getElementById('i-cat').value;
-  tItems.push({name,qty,price,cat});
-  document.getElementById('i-name').value='';document.getElementById('i-price').value='';document.getElementById('i-qty').value='1';
+  tItems.push({name,qty,price,cat:document.getElementById('i-cat').value});
+  document.getElementById('i-n').value='';document.getElementById('i-p').value='';document.getElementById('i-q').value='1';
   const tot=tItems.reduce((s,i)=>s+i.qty*i.price,0);
-  if(tot>0)document.getElementById('t-total').value=tot.toFixed(2);
+  if(tot>0)document.getElementById('t-tot').value=tot.toFixed(2);
   renderItems();
 }
 
 function renderItems(){
-  document.getElementById('items-list').innerHTML=tItems.length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:10px">Aucune ligne</div>':
-    tItems.map((it,i)=>`<div class="irow">
+  document.getElementById('items-list').innerHTML=tItems.length===0?'<div style="font-size:10px;color:var(--gris);text-align:center;padding:8px">Aucune ligne</div>':
+    tItems.map((it,i)=>`<div class="ir">
       <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${it.qty}x ${it.name}</span>
-      <span class="iprice">${(it.qty*it.price).toFixed(2)}€</span>
-      <span class="icat">${CATS[it.cat]?.label||it.cat}</span>
+      <span class="ipr">${(it.qty*it.price).toFixed(2)}€</span>
+      <span class="icat">${CATS[it.cat]?.lb||it.cat}</span>
       <span class="idel" onclick="delItem(${i})">✕</span>
     </div>`).join('');
 }
 
-function delItem(i){tItems.splice(i,1);const tot=tItems.reduce((s,i)=>s+i.qty*i.price,0);document.getElementById('t-total').value=tot>0?tot.toFixed(2):'';renderItems()}
+function delItem(i){tItems.splice(i,1);const tot=tItems.reduce((s,i)=>s+i.qty*i.price,0);document.getElementById('t-tot').value=tot>0?tot.toFixed(2):'';renderItems()}
 
 async function saveTicket(){
-  const msg=document.getElementById('save-msg');
-  if(!CETAB){msg.innerHTML='<div class="merr">Aucun établissement</div>';return}
+  const msg=document.getElementById('t-msg');
+  if(!CE){msg.innerHTML='<div class="err">Aucun établissement</div>';return}
   const sid=document.getElementById('t-srv').value;
-  const date=document.getElementById('t-date').value;
+  const date=document.getElementById('t-dt').value;
   const cov=parseInt(document.getElementById('t-cov').value)||1;
-  const total=parseFloat(document.getElementById('t-total').value)||0;
-  if(!sid||!date||total<=0){msg.innerHTML='<div class="merr">Remplis tous les champs</div>';return}
-  const{data:tix,error}=await sb.from('tickets').insert({serveur_id:sid,etablissement_id:CETAB.id,date,total,couverts:cov}).select().single();
-  if(error){msg.innerHTML='<div class="merr">'+error.message+'</div>';return}
-  if(tItems.length>0)await sb.from('ticket_items').insert(tItems.map(it=>({ticket_id:tix.id,nom:it.name,categorie:it.cat,quantite:it.qty,prix:it.price})));
+  const total=parseFloat(document.getElementById('t-tot').value)||0;
+  if(!sid||!date||total<=0){msg.innerHTML='<div class="err">Remplis tous les champs</div>';return}
+  const{data:tix,error}=await SB.from('tickets').insert({serveur_id:sid,etablissement_id:CE.id,date,total,couverts:cov}).select().single();
+  if(error){msg.innerHTML='<div class="err">'+error.message+'</div>';return}
+  if(tItems.length)await SB.from('ticket_items').insert(tItems.map(it=>({ticket_id:tix.id,nom:it.name,categorie:it.cat,quantite:it.qty,prix:it.price})));
   await loadData();tItems=[];
-  document.getElementById('t-cov').value='';document.getElementById('t-total').value='';
+  document.getElementById('t-cov').value='';document.getElementById('t-tot').value='';
   document.getElementById('ocr-prev').style.display='none';document.getElementById('ocr-st').style.display='none';
-  renderItems();msg.innerHTML='<div class="mok">✓ Ticket enregistré !</div>';
+  renderItems();msg.innerHTML='<div class="ok">✓ Ticket enregistré !</div>';
   setTimeout(()=>msg.innerHTML='',3000);
 }
 
+// ===== EQUIPE =====
 function renderSrvs(){
   const el=document.getElementById('srv-list');
-  if(SRVS.length===0){el.innerHTML='<div class="empty"><div class="eicon">⊙</div><div class="etitle2">Aucun serveur</div></div>';return}
-  const all=getAllSt();
+  if(!SRVS.length){el.innerHTML='<div class="emp"><div class="empi">⊙</div><div class="empt">Aucun serveur</div></div>';return}
+  const all=gAll();
   el.innerHTML=SRVS.map(s=>{
-    const st=getStat(s.id);const tr=getTr(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
+    const st=gStat(s.id);const tr=gTrend(s.id);const tc=tr==='↑'?'#7dba82':tr==='↓'?'var(--rouge)':'var(--gris)';
     const sc=calcSc({...s,...st},all);
     return`<div class="scard">
-      <div class="stop2">
-        <div class="sav" style="background:${s.couleur}22;color:${s.couleur};border:1.5px solid ${s.couleur}44">${s.initiale||s.nom[0]}</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:500">${s.nom} <span style="color:${tc}">${tr}</span></div>
-        <div style="font-size:10px;color:var(--gris)">${st.tix} tickets · Score ${sc.score}/100</div></div>
+      <div class="scTop">
+        <div class="scav" style="background:${s.couleur}22;color:${s.couleur};border:1.5px solid ${s.couleur}44">${s.initiale||s.nom[0]}</div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:500">${s.nom} <span style="color:${tc}">${tr}</span></div>
+        <div style="font-size:9px;color:var(--gris)">${st.tix} tickets · Score ${sc.score}/100</div></div>
       </div>
-      <div class="sstats">
-        <div class="sstat"><div class="sstl">CA</div><div class="sstv">${feur(st.ca)}</div></div>
-        <div class="sstat"><div class="sstl">Moy ticket</div><div class="sstv">${st.avgT}€</div></div>
-        <div class="sstat"><div class="sstl">Comportement</div><div class="sstv">${s.note_comportement||10}/10</div></div>
+      <div class="scst">
+        <div class="scsi"><div class="scsil">CA</div><div class="scsiv">${feur(st.ca)}</div></div>
+        <div class="scsi"><div class="scsil">Moy ticket</div><div class="scsiv">${st.avgT}€</div></div>
+        <div class="scsi"><div class="scsil">Comportement</div><div class="scsiv">${s.note_comportement||10}/10</div></div>
       </div>
-      <div class="aactions">
-        <button class="combtn" onclick="openCom('${s.id}')">💬 Commentaire</button>
-        <button class="delbtn" onclick="delSrv('${s.id}')">Supprimer</button>
+      <div class="acts">
+        <button class="btncom" onclick="openCom('${s.id}')">💬 Commentaire</button>
+        <button class="btndel" onclick="delSrv('${s.id}')">Supprimer</button>
       </div>
     </div>`;
   }).join('');
 }
 
 async function addSrv(){
-  const name=document.getElementById('nsrv').value.trim();if(!name||!CETAB)return;
+  const name=document.getElementById('nsrv').value.trim();if(!name||!CE)return;
   const cols=['#c9a84c','#4a9eb5','#cd7f32','#8b5e9a','#3d6b40','#e06b6b','#7dba82'];
-  const{data,error}=await sb.from('serveurs').insert({nom:name,couleur:cols[SRVS.length%cols.length],initiale:name[0].toUpperCase(),etablissement_id:CETAB.id,note_comportement:10}).select().single();
+  const{data,error}=await SB.from('serveurs').insert({nom:name,couleur:cols[SRVS.length%cols.length],initiale:name[0].toUpperCase(),etablissement_id:CE.id,note_comportement:10}).select().single();
   if(error){alert(error.message);return}
   SRVS.push(data);document.getElementById('nsrv').value='';renderSrvs();
 }
 
 async function delSrv(id){
   if(!confirm('Supprimer ce serveur ?'))return;
-  await sb.from('serveurs').delete().eq('id',id);
+  await SB.from('serveurs').delete().eq('id',id);
   SRVS=SRVS.filter(s=>s.id!==id);renderSrvs();
 }
 
-function renderStaffL(){
-  const el=document.getElementById('staff-list');
-  if(STAFFU.length===0){el.innerHTML='<div class="empty"><div class="eicon">🧑‍🍳</div><div class="etitle2">Aucun staff</div><div style="font-size:12px">Les CDR/Barmen/Commis apparaissent ici après inscription</div></div>';return}
-  el.innerHTML=STAFFU.map(s=>{
-    const rm={cdr:'⭐ Chef de rang',barman:'🍸 Barman',commis:'👨‍🍳 Commis'};
-    return`<div class="scard">
-      <div class="stop2">
-        <div class="sav" style="background:rgba(74,158,181,0.15);color:var(--bleu);border:1.5px solid rgba(74,158,181,0.3)">${s.nom[0]}</div>
-        <div style="flex:1"><div style="font-size:15px;font-weight:500">${s.nom}</div>
-        <div style="font-size:10px;color:var(--gris)">${rm[s.role]||s.role}</div></div>
-        <div style="text-align:right">
-          <div style="font-size:10px;color:var(--gris)">Eau</div>
-          <div style="font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:700;color:var(--bleu)">${s.eau_ml||0}ml</div>
-        </div>
+function renderStaffTeam(){
+  const el=document.getElementById('staff-team-list');
+  if(!STFU.length){el.innerHTML='<div class="emp"><div class="empi">🧑‍🍳</div><div class="empt">Aucun staff inscrit</div><div style="font-size:11px">Les CDR/Barmen/Commis apparaissent ici après inscription</div></div>';return}
+  const rm={cdr:'⭐ Chef de rang',barman:'🍸 Barman',commis:'👨‍🍳 Commis'};
+  el.innerHTML=STFU.map(s=>`<div class="scard">
+    <div class="scTop">
+      <div class="scav" style="background:rgba(74,158,181,.15);color:var(--bleu);border:1.5px solid rgba(74,158,181,.3)">${s.nom[0]}</div>
+      <div style="flex:1"><div style="font-size:14px;font-weight:500">${s.nom}</div>
+      <div style="font-size:9px;color:var(--gris)">${rm[s.role]||s.role}</div></div>
+      <div style="text-align:right">
+        <div style="font-size:9px;color:var(--gris)">💧${s.eau_ml||0}ml</div>
+        <div style="font-size:9px;color:var(--or)">🍽️${s.calories_jour||0}kcal</div>
       </div>
-    </div>`;
-  }).join('');
+    </div>
+  </div>`).join('');
 }
 
+// ===== COMMENTAIRE =====
 function openCom(sid){
   document.getElementById('com-sid').value=sid;
   document.getElementById('com-txt').value='';
   document.getElementById('com-note').value=7;
   document.getElementById('nd').textContent='7/10';
-  document.getElementById('modal-com').classList.add('on');
+  document.getElementById('m-com').classList.add('on');
 }
 
 async function saveComment(){
@@ -134,161 +1161,164 @@ async function saveComment(){
   const txt=document.getElementById('com-txt').value.trim();
   const note=parseInt(document.getElementById('com-note').value);
   const msg=document.getElementById('com-msg');
-  if(!txt){msg.innerHTML='<div class="merr">Écris un commentaire</div>';return}
-  msg.innerHTML='<div class="mok">🤖 Reformulation IA...</div>';
+  if(!txt){msg.innerHTML='<div class="err">Écris un commentaire</div>';return}
+  msg.innerHTML='<div class="ok">🤖 Reformulation IA...</div>';
   let ref=txt;
   try{
     const res=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,messages:[{role:'user',content:`Reformule ce commentaire de manager en français professionnel concis (2 phrases max): "${txt}"`}]})
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:150,
+        messages:[{role:'user',content:`Reformule ce commentaire de manager de restaurant en français professionnel concis (2 phrases max): "${txt}"`}]})
     });
     const data=await res.json();ref=data.content?.[0]?.text||txt;
   }catch(e){}
   try{
-    await sb.from('commentaires').insert({serveur_id:sid,texte_original:txt,texte_reformule:ref,type,note_comportement:note});
-    const{data:aC}=await sb.from('commentaires').select('note_comportement').eq('serveur_id',sid);
+    await SB.from('commentaires').insert({serveur_id:sid,texte_original:txt,texte_reformule:ref,type,note_comportement:note});
+    const{data:aC}=await SB.from('commentaires').select('note_comportement').eq('serveur_id',sid);
     const avg=aC?.length?Math.round(aC.reduce((s,c)=>s+c.note_comportement,0)/aC.length):note;
-    await sb.from('serveurs').update({note_comportement:avg}).eq('id',sid);
+    await SB.from('serveurs').update({note_comportement:avg}).eq('id',sid);
     await loadData();
-    msg.innerHTML='<div class="mok">✓ Enregistré !</div>';
-    setTimeout(()=>closeM('modal-com'),1500);
-  }catch(e){msg.innerHTML='<div class="merr">Exécute d\'abord le SQL Supabase</div>';}
+    msg.innerHTML='<div class="ok">✓ Commentaire enregistré !</div>';
+    setTimeout(()=>closeM('m-com'),1500);
+  }catch(e){msg.innerHTML='<div class="err">Exécute d\'abord le SQL Supabase</div>';}
 }
 
 function closeM(id){document.getElementById(id).classList.remove('on')}
 
+// ===== SANTE =====
 async function renderSante(){
   try{
-    const{data:al}=await sb.from('alertes_sos').select('*,staff(nom,role)').eq('etablissement_id',CETAB?.id||'').order('created_at',{ascending:false}).limit(10);
-    document.getElementById('alertes-list').innerHTML=(al||[]).length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:12px">Aucune alerte 👍</div>':
-      (al||[]).map(a=>`<div class="alertc${a.lu?' lu':''}">
-        <div style="font-size:22px">${a.type==='chute'?'📱':'🆘'}</div>
+    const{data:al}=await SB.from('alertes_sos').select('*,staff(nom,role)').eq('etablissement_id',CE?.id||'').order('created_at',{ascending:false}).limit(10);
+    document.getElementById('alts-list').innerHTML=!(al?.length)?'<div style="font-size:11px;color:var(--gris);text-align:center;padding:10px">Aucune alerte 👍</div>':
+      al.map(a=>`<div class="altc${a.lu?' lu':''}">
+        <div style="font-size:20px">${a.type==='chute'?'📱':'🆘'}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:500">${a.staff?.nom||'Inconnu'}</div>
-          <div style="font-size:11px;color:var(--gris)">${a.type==='chute'?'Chute détectée':'Alerte SOS'}</div>
-          <div style="font-size:10px;color:var(--rouge)">${new Date(a.created_at).toLocaleString('fr-FR')}</div>
+          <div style="font-size:13px;font-weight:500">${a.staff?.nom||'Inconnu'}</div>
+          <div style="font-size:10px;color:var(--gris)">${a.type==='chute'?'Chute détectée':'Alerte SOS'}</div>
+          <div style="font-size:9px;color:var(--rouge)">${new Date(a.created_at).toLocaleString('fr-FR')}</div>
         </div>
-        ${!a.lu?`<button class="bsm b" onclick="markLu('${a.id}')">✓ Lu</button>`:''}
+        ${!a.lu?`<button class="bsm b" onclick="markLu('${a.id}')">✓</button>`:''}
       </div>`).join('');
-  }catch(e){document.getElementById('alertes-list').innerHTML='<div style="font-size:12px;color:var(--gris);text-align:center;padding:12px">Exécute le SQL Supabase pour activer</div>'}
-  document.getElementById('sante-list').innerHTML=STAFFU.length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:12px">Aucun staff inscrit</div>':
-    STAFFU.map(s=>{
-      const wPct=Math.min(((s.eau_ml||0)/2000)*100,100);
-      const cPct=Math.min(((s.calories_jour||0)/2000)*100,100);
-      return`<div class="santec">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-          <div style="width:36px;height:36px;border-radius:50%;background:rgba(74,158,181,0.15);color:var(--bleu);border:1px solid rgba(74,158,181,0.3);display:flex;align-items:center;justify-content:center;font-size:14px">${s.nom[0]}</div>
-          <div><div style="font-size:14px;font-weight:500">${s.nom}</div><div style="font-size:10px;color:var(--gris)">${s.role==='cdr'?'Chef de rang':s.role==='barman'?'Barman':'Commis'}</div></div>
+  }catch(e){document.getElementById('alts-list').innerHTML='<div style="font-size:11px;color:var(--gris);text-align:center;padding:10px">Exécute le SQL Supabase</div>'}
+  document.getElementById('sante-list').innerHTML=!STFU.length?'<div style="font-size:11px;color:var(--gris);text-align:center;padding:10px">Aucun staff inscrit</div>':
+    STFU.map(s=>{
+      const wP=Math.min(((s.eau_ml||0)/2000)*100,100);
+      const cP=Math.min(((s.calories_jour||0)/2000)*100,100);
+      return`<div class="sncard">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+          <div style="width:32px;height:32px;border-radius:50%;background:rgba(74,158,181,.15);color:var(--bleu);border:1px solid rgba(74,158,181,.3);display:flex;align-items:center;justify-content:center;font-size:13px">${s.nom[0]}</div>
+          <div><div style="font-size:13px;font-weight:500">${s.nom}</div><div style="font-size:9px;color:var(--gris)">${s.role==='cdr'?'Chef de rang':s.role==='barman'?'Barman':'Commis'}</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-          <div style="background:var(--surf2);border-radius:6px;padding:8px">
-            <div style="font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">💧 Hydratation</div>
-            <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px"><div style="height:4px;border-radius:2px;background:var(--bleu);width:${wPct}%"></div></div>
-            <div style="font-size:10px;color:var(--creme);margin-top:3px">${s.eau_ml||0} / 2000 ml</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+          <div style="background:var(--surf2);border-radius:6px;padding:7px">
+            <div style="font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">💧 Eau</div>
+            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px"><div style="height:3px;border-radius:2px;background:var(--bleu);width:${wP}%"></div></div>
+            <div style="font-size:9px;color:var(--creme);margin-top:2px">${s.eau_ml||0}/2000ml</div>
           </div>
-          <div style="background:var(--surf2);border-radius:6px;padding:8px">
-            <div style="font-size:9px;color:var(--gris);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:4px">🍽️ Calories</div>
-            <div style="height:4px;background:rgba(255,255,255,0.07);border-radius:2px"><div style="height:4px;border-radius:2px;background:var(--or);width:${cPct}%"></div></div>
-            <div style="font-size:10px;color:var(--creme);margin-top:3px">${s.calories_jour||0} / 2000 kcal</div>
+          <div style="background:var(--surf2);border-radius:6px;padding:7px">
+            <div style="font-size:8px;color:var(--gris);text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px">🍽️ Calories</div>
+            <div style="height:3px;background:rgba(255,255,255,.07);border-radius:2px"><div style="height:3px;border-radius:2px;background:var(--or);width:${cP}%"></div></div>
+            <div style="font-size:9px;color:var(--creme);margin-top:2px">${s.calories_jour||0}/2000kcal</div>
           </div>
         </div>
       </div>`;
     }).join('');
 }
 
-async function markLu(id){await sb.from('alertes_sos').update({lu:true}).eq('id',id);renderSante()}
+async function markLu(id){await SB.from('alertes_sos').update({lu:true}).eq('id',id);renderSante()}
 
+// ===== ADMIN =====
 async function renderAdmin(){
   if(U.role!=='superadmin')return;
-  const{data:etabs}=await sb.from('etablissements').select('*').order('nom');ETABS=etabs||[];
-  const sel=document.getElementById('codesel');
-  if(sel)sel.innerHTML=(etabs||[]).map(e=>`<option value="${e.id}">${e.nom}</option>`).join('');
-  document.getElementById('etab-list').innerHTML=(etabs||[]).map(e=>`<div style="background:var(--surf2);border-radius:8px;padding:12px;margin-top:10px">
-    <div style="font-size:14px;font-weight:500">${e.nom}</div>
-    <div class="cbadge">${e.code_invitation}</div>
-    <div class="aactions"><button class="bsm r" onclick="delEtab('${e.id}')">Supprimer</button></div>
+  const{data:etabs}=await SB.from('etablissements').select('*').order('nom');ETABS=etabs||[];
+  const sel=document.getElementById('code-sel');
+  if(sel)sel.innerHTML=ETABS.map(e=>`<option value="${e.id}">${e.nom}</option>`).join('');
+  document.getElementById('etab-list').innerHTML=ETABS.map(e=>`<div style="background:var(--surf2);border-radius:8px;padding:10px;margin-top:8px">
+    <div style="font-size:13px;font-weight:500">${e.nom}</div>
+    <div class="cbdg">${e.code_invitation}</div>
+    <div class="aact"><button class="bsm r" onclick="delEtab('${e.id}')">Supprimer</button></div>
   </div>`).join('');
-  const{data:users}=await sb.from('utilisateurs').select('*').order('nom');
-  document.getElementById('users-list').innerHTML=(users||[]).map(u=>`<div style="background:var(--surf2);border-radius:8px;padding:12px;margin-bottom:8px">
+  const{data:users}=await SB.from('utilisateurs').select('*').order('nom');
+  document.getElementById('users-list').innerHTML=(users||[]).map(u=>`<div style="background:var(--surf2);border-radius:8px;padding:10px;margin-bottom:6px">
     <div style="display:flex;align-items:center;justify-content:space-between">
-      <div><div style="font-size:14px;font-weight:500">${u.nom}</div><div style="font-size:11px;color:var(--gris)">${u.role==='superadmin'?'👑 Super Admin':'👔 Directeur'}</div></div>
-      <div class="cbadge">${u.code_acces}</div>
+      <div><div style="font-size:13px;font-weight:500">${u.nom}</div><div style="font-size:10px;color:var(--gris)">${u.role==='superadmin'?'👑 Super Admin':'👔 Directeur'}</div></div>
+      <div class="cbdg">${u.code_acces}</div>
     </div>
-    ${u.role!=='superadmin'?`<div class="aactions"><button class="bsm r" onclick="delUser('${u.id}')">Supprimer</button></div>`:''}
+    ${u.role!=='superadmin'?`<div class="aact"><button class="bsm r" onclick="delUser('${u.id}')">Supprimer</button></div>`:''}
   </div>`).join('');
 }
 
 async function genCode(){
-  const eid=document.getElementById('codesel')?.value;if(!eid)return;
+  const eid=document.getElementById('code-sel')?.value;if(!eid)return;
   const code=Math.random().toString(36).substring(2,8).toUpperCase();
   const etab=ETABS.find(e=>e.id===eid);
-  document.getElementById('code-gen').innerHTML=`<div style="background:rgba(201,168,76,0.1);border:0.5px solid rgba(201,168,76,0.3);border-radius:10px;padding:14px;text-align:center;margin-top:10px">
-    <div style="font-size:11px;color:var(--gris);margin-bottom:8px">Code pour ${etab?.nom||''} :</div>
-    <div class="cbadge" style="font-size:20px;padding:8px 20px;letter-spacing:4px">${code}</div>
-    <div style="font-size:11px;color:var(--gris);margin-top:8px">📱 Envoie ce code au directeur</div>
+  document.getElementById('code-out').innerHTML=`<div style="background:rgba(201,168,76,.1);border:.5px solid rgba(201,168,76,.3);border-radius:10px;padding:14px;text-align:center;margin-top:10px">
+    <div style="font-size:10px;color:var(--gris);margin-bottom:6px">Code pour ${etab?.nom||''} :</div>
+    <div class="cbdg" style="font-size:18px;padding:6px 16px;letter-spacing:4px">${code}</div>
+    <div style="font-size:10px;color:var(--gris);margin-top:6px">📱 Envoie ce code au directeur</div>
   </div>`;
-  try{await sb.from('codes_invitation').insert({code,etablissement_id:eid})}catch(e){}
+  try{await SB.from('codes_invitation').insert({code,etablissement_id:eid})}catch(e){}
 }
 
 async function addEtab(){
-  const nom=document.getElementById('ne-nom').value.trim();
-  const code=document.getElementById('ne-code').value.trim().toUpperCase();
+  const nom=document.getElementById('ne-n').value.trim();
+  const code=document.getElementById('ne-c').value.trim().toUpperCase();
   if(!nom||!code)return;
-  await sb.from('etablissements').insert({nom,code_invitation:code});
-  document.getElementById('ne-nom').value='';document.getElementById('ne-code').value='';
+  const{error}=await SB.from('etablissements').insert({nom,code_invitation:code});
+  if(error){alert(error.message);return}
+  document.getElementById('ne-n').value='';document.getElementById('ne-c').value='';
   renderAdmin();
 }
 
-async function delEtab(id){if(!confirm('Supprimer ?'))return;await sb.from('etablissements').delete().eq('id',id);renderAdmin()}
-async function delUser(id){if(!confirm('Supprimer ?'))return;await sb.from('utilisateurs').delete().eq('id',id);renderAdmin()}
+async function delEtab(id){if(!confirm('Supprimer ?'))return;await SB.from('etablissements').delete().eq('id',id);renderAdmin()}
+async function delUser(id){if(!confirm('Supprimer ?'))return;await SB.from('utilisateurs').delete().eq('id',id);renderAdmin()}
 
 // ===== STAFF APP =====
 async function startStaff(){
-  document.getElementById('login-screen').style.display='none';
+  document.getElementById('login').style.display='none';
   document.getElementById('staff-app').classList.add('on');
   const h=new Date().getHours();
-  document.getElementById('sgreet').textContent=h<12?'Bonjour ☀️':h<18?'Bon après-midi 🌤️':'Bonsoir 🌙';
-  document.getElementById('sname').textContent=U.nom;
+  document.getElementById('s-grt').textContent=h<12?'Bonjour ☀️':h<18?'Bon après-midi 🌤️':'Bonsoir 🌙';
+  document.getElementById('s-nm').textContent=U.nom;
   const rm={cdr:'⭐ Chef de rang',barman:'🍸 Barman',commis:'👨‍🍳 Commis'};
-  const rc={cdr:'r-cdr',barman:'r-barman',commis:'r-commis'};
-  const rd=document.getElementById('srole');
+  const rc={cdr:'rl-cdr',barman:'rl-bar',commis:'rl-com'};
+  const rd=document.getElementById('s-rl');
   rd.textContent=rm[U.role]||U.role;
-  rd.className='srole '+(rc[U.role]||'r-commis');
-  // Charger eau
+  rd.className='srl '+(rc[U.role]||'rl-com');
+  // Eau
   try{
     const today=new Date().toISOString().split('T')[0];
-    const{data:h2}=await sb.from('hydratation').select('*').eq('staff_id',U.id).eq('date',today).single();
+    const{data:h2}=await SB.from('hydratation').select('*').eq('staff_id',U.id).eq('date',today).single();
     if(h2){wMl=h2.quantite_ml||0;wGoal=h2.objectif_ml||2000;}
   }catch(e){}
-  // Charger repas
+  // Repas
   try{
     const today=new Date().toISOString().split('T')[0];
-    const{data:rp}=await sb.from('repas').select('*').eq('staff_id',U.id).eq('date',today);
-    repasJ=rp||[];
-    nutri={c:0,p:0,g:0,l:0};
-    repasJ.forEach(r=>{nutri.c+=r.calories||0;nutri.p+=r.proteines||0;nutri.g+=r.glucides||0;nutri.l+=r.lipides||0;});
+    const{data:rp}=await SB.from('repas').select('*').eq('staff_id',U.id).eq('date',today);
+    repasJ=rp||[];nut={c:0,p:0,g:0,l:0};
+    repasJ.forEach(r=>{nut.c+=r.calories||0;nut.p+=r.proteines||0;nut.g+=r.glucides||0;nut.l+=r.lipides||0;});
   }catch(e){}
   // Score
   if(U.etablissement_id){
     try{
       const[{data:srv},{data:tix}]=await Promise.all([
-        sb.from('serveurs').select('*').eq('etablissement_id',U.etablissement_id),
-        sb.from('tickets').select('*').eq('etablissement_id',U.etablissement_id)
+        SB.from('serveurs').select('*').eq('etablissement_id',U.etablissement_id),
+        SB.from('tickets').select('*').eq('etablissement_id',U.etablissement_id)
       ]);
       SRVS=srv||[];TIXS=tix||[];
-      if(tix?.length){const{data:its}=await sb.from('ticket_items').select('*').in('ticket_id',tix.map(t=>t.id));ITMS=its||[];}
+      if(tix?.length){const{data:its}=await SB.from('ticket_items').select('*').in('ticket_id',tix.map(t=>t.id));ITMS=its||[];}
       const ms=SRVS.find(s=>s.nom.toLowerCase()===U.nom.toLowerCase());
-      if(ms){const all=getAllSt();const st=getStat(ms.id);const sc=calcSc({...ms,...st},all);document.getElementById('sscore').textContent=sc.score+'/100';}
+      if(ms){const all=gAll();const st=gStat(ms.id);const sc=calcSc({...ms,...st},all);document.getElementById('s-sc').textContent=sc.score+'/100';}
     }catch(e){}
   }
-  updateWater();renderNutri();renderRW();animStaff();startDet();
+  updateWater();renderNutri();renderRW();animateStaff();startDetection();
 }
 
-function goS(pg,el){
-  document.querySelectorAll('.spage').forEach(p=>p.classList.remove('on'));
-  document.querySelectorAll('.staff-app .bottom-nav .bnav').forEach(b=>b.classList.remove('on'));
+function goStaff(pg,el){
+  document.querySelectorAll('.spg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('#staff-app .bnav .bni').forEach(b=>b.classList.remove('on'));
   document.getElementById('sp-'+pg).classList.add('on');el.classList.add('on');
-  document.querySelector('.staff-scroll').scrollTop=0;
+  document.querySelector('.sscr').scrollTop=0;
 }
 
 // WATER
@@ -296,25 +1326,25 @@ async function addW(ml){
   wMl=Math.min(wMl+ml,wGoal*1.5);updateWater();
   try{
     const today=new Date().toISOString().split('T')[0];
-    const{data:ex}=await sb.from('hydratation').select('*').eq('staff_id',U.id).eq('date',today).single();
-    if(ex)await sb.from('hydratation').update({quantite_ml:wMl}).eq('id',ex.id);
-    else await sb.from('hydratation').insert({staff_id:U.id,date:today,quantite_ml:wMl,objectif_ml:wGoal});
-    await sb.from('staff').update({eau_ml:wMl}).eq('id',U.id);
+    const{data:ex}=await SB.from('hydratation').select('*').eq('staff_id',U.id).eq('date',today).single();
+    if(ex)await SB.from('hydratation').update({quantite_ml:wMl}).eq('id',ex.id);
+    else await SB.from('hydratation').insert({staff_id:U.id,date:today,quantite_ml:wMl,objectif_ml:wGoal});
+    await SB.from('staff').update({eau_ml:wMl}).eq('id',U.id);
   }catch(e){}
 }
 
 function updateWater(){
-  document.getElementById('wml').textContent=wMl+' ml';
-  document.getElementById('wgoal').textContent='Objectif : '+wGoal+' ml';
+  document.getElementById('w-ml').textContent=wMl+' ml';
+  document.getElementById('w-gl').textContent='Objectif : '+wGoal+' ml';
   const pct=Math.min((wMl/wGoal)*100,100);
-  const el=document.getElementById('wlevel');
-  if(el)el.style.transform=`translateY(${118-(pct/100*118)}px)`;
+  const el=document.getElementById('wlv');
+  if(el)el.style.transform=`translateY(${104-(pct/100*104)}px)`;
 }
 
 // NUTRITION
 async function analyseRepas(e){
   const file=e.target.files[0];if(!file)return;
-  const st=document.getElementById('n-status');
+  const st=document.getElementById('n-st');
   st.style.display='block';st.textContent='🤖 Analyse du repas...';
   try{
     const rd=new FileReader();
@@ -322,44 +1352,41 @@ async function analyseRepas(e){
       const b64=ev.target.result.split(',')[1];
       const res=await fetch('https://api.anthropic.com/v1/messages',{
         method:'POST',headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,messages:[{role:'user',content:[
-          {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
-          {type:'text',text:'Analyse ce repas. Réponds UNIQUEMENT en JSON: {"description":"...","calories":0,"proteines":0,"glucides":0,"lipides":0}'}
-        ]}]})
+        body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:200,
+          messages:[{role:'user',content:[
+            {type:'image',source:{type:'base64',media_type:file.type,data:b64}},
+            {type:'text',text:'Analyse ce repas. Réponds UNIQUEMENT en JSON valide: {"description":"...","calories":0,"proteines":0,"glucides":0,"lipides":0}'}
+          ]}]})
       });
       const data=await res.json();
       try{
         const p=JSON.parse((data.content?.[0]?.text||'{}').replace(/```json|```/g,'').trim());
         const rp={staff_id:U.id,date:new Date().toISOString().split('T')[0],description:p.description||'Repas',calories:p.calories||0,proteines:p.proteines||0,glucides:p.glucides||0,lipides:p.lipides||0};
-        await sb.from('repas').insert(rp);
-        repasJ.push(rp);
-        nutri.c+=rp.calories;nutri.p+=rp.proteines;nutri.g+=rp.glucides;nutri.l+=rp.lipides;
-        await sb.from('staff').update({calories_jour:nutri.c}).eq('id',U.id);
+        await SB.from('repas').insert(rp);
+        repasJ.push(rp);nut.c+=rp.calories;nut.p+=rp.proteines;nut.g+=rp.glucides;nut.l+=rp.lipides;
+        await SB.from('staff').update({calories_jour:nut.c}).eq('id',U.id);
         st.textContent=`✓ ${p.description} — ${p.calories} kcal`;
         renderNutri();
-      }catch(err){st.textContent='⚠️ Impossible d\'analyser';}
+      }catch(err){st.textContent='⚠️ Analyse impossible';}
     };
     rd.readAsDataURL(file);
   }catch(err){st.textContent='⚠️ Erreur';}
 }
 
 function renderNutri(){
-  document.getElementById('n-cal').textContent=Math.round(nutri.c);
-  document.getElementById('n-prot').textContent=Math.round(nutri.p);
-  document.getElementById('n-gluc').textContent=Math.round(nutri.g);
-  document.getElementById('n-lip').textContent=Math.round(nutri.l);
-  document.getElementById('n-cal-b').style.width=Math.min((nutri.c/2000)*100,100)+'%';
-  document.getElementById('n-prot-b').style.width=Math.min((nutri.p/60)*100,100)+'%';
-  document.getElementById('n-gluc-b').style.width=Math.min((nutri.g/250)*100,100)+'%';
-  document.getElementById('n-lip-b').style.width=Math.min((nutri.l/70)*100,100)+'%';
-  document.getElementById('repas-list').innerHTML=repasJ.length===0?'<div style="font-size:12px;color:var(--gris);text-align:center;padding:16px">Aucun repas aujourd\'hui</div>':
-    repasJ.map(r=>`<div class="rcard">
-      <div style="font-size:24px">🍽️</div>
-      <div class="rinfo2">
-        <div class="rdesc">${r.description||'Repas'}</div>
-        <div class="rmacros">P: ${Math.round(r.proteines||0)}g · G: ${Math.round(r.glucides||0)}g · L: ${Math.round(r.lipides||0)}g</div>
-      </div>
-      <div class="rcal">${Math.round(r.calories||0)}<div style="font-size:9px;color:var(--gris)">kcal</div></div>
+  document.getElementById('n-c').textContent=Math.round(nut.c);
+  document.getElementById('n-p').textContent=Math.round(nut.p);
+  document.getElementById('n-g').textContent=Math.round(nut.g);
+  document.getElementById('n-l').textContent=Math.round(nut.l);
+  document.getElementById('n-cb').style.width=Math.min((nut.c/2000)*100,100)+'%';
+  document.getElementById('n-pb').style.width=Math.min((nut.p/60)*100,100)+'%';
+  document.getElementById('n-gb').style.width=Math.min((nut.g/250)*100,100)+'%';
+  document.getElementById('n-lb').style.width=Math.min((nut.l/70)*100,100)+'%';
+  document.getElementById('repas-list').innerHTML=!repasJ.length?'<div style="font-size:11px;color:var(--gris);text-align:center;padding:14px">Aucun repas aujourd\'hui</div>':
+    repasJ.map(r=>`<div class="rpcard">
+      <div style="font-size:22px">🍽️</div>
+      <div class="rpi"><div class="rpd">${r.description||'Repas'}</div><div class="rpm">P:${Math.round(r.proteines||0)}g G:${Math.round(r.glucides||0)}g L:${Math.round(r.lipides||0)}g</div></div>
+      <div class="rpc">${Math.round(r.calories||0)}<div style="font-size:8px;color:var(--gris)">kcal</div></div>
     </div>`).join('');
 }
 
@@ -372,23 +1399,20 @@ function startSOS(){
     alert('🆘 Alerte envoyée au directeur !');
   },3000);
 }
-
 function cancelSOS(){
   clearTimeout(sosT);sosT=null;
   const b=document.getElementById('sos-bar');
   b.style.transition='none';b.style.width='0%';
-  setTimeout(()=>b.style.transition='width 3s linear',100);
+  setTimeout(()=>b.style.transition='width 3s linear',50);
 }
-
 async function sendSOS(type){
-  try{await sb.from('alertes_sos').insert({staff_id:U.id,etablissement_id:U.etablissement_id,type,message:U.nom+' alerte: '+type})}
-  catch(e){console.log('Table alertes_sos manquante - exécute le SQL')}
+  try{await SB.from('alertes_sos').insert({staff_id:U.id,etablissement_id:U.etablissement_id,type,message:U.nom+' alerte: '+type})}
+  catch(e){}
 }
-
-function startDet(){
-  if(!window.DeviceMotionEvent){document.getElementById('det-lbl').textContent='Non supporté';document.getElementById('det-dot').className='detdot off';return}
+function startDetection(){
+  if(!window.DeviceMotionEvent)return;
   detOn=true;
-  window.addEventListener('devicemotion',(e)=>{
+  window.addEventListener('devicemotion',e=>{
     if(!detOn)return;
     const a=e.accelerationIncludingGravity;if(!a)return;
     const f=Math.sqrt((a.x||0)**2+(a.y||0)**2+(a.z||0)**2);
@@ -396,75 +1420,70 @@ function startDet(){
     if(f>35&&now-lastShk>5000){lastShk=now;sendSOS('chute');alert('📱 Chute détectée ! Alerte envoyée.')}
   });
 }
-
 function toggleDet(){
   detOn=!detOn;
-  document.getElementById('det-dot').className='detdot '+(detOn?'on':'off');
-  document.getElementById('det-lbl').textContent=detOn?'Active — secoue fort pour alerter':'Désactivée';
+  document.getElementById('det-d').className='detd '+(detOn?'on':'off');
+  document.getElementById('det-l').textContent=detOn?'Active — secoue fort pour alerter':'Désactivée';
   const b=document.getElementById('det-btn');
   b.textContent=detOn?'ON':'OFF';
-  b.style.background=detOn?'rgba(74,158,181,0.15)':'rgba(180,50,50,0.2)';
-  b.style.color=detOn?'var(--bleu)':'var(--rouge)';
+  b.className='bsm '+(detOn?'b':'r');
 }
 
 // AVATAR
-function animStaff(){
+function animateStaff(){
   setInterval(()=>{
-    const cg=document.getElementById('sc-g');const cd=document.getElementById('sc-d');
-    if(!cg||!cd)return;
-    cg.style.display='block';cd.style.display='block';
-    setTimeout(()=>{cg.style.display='none';cd.style.display='none'},120);
+    const g=document.getElementById('cl-g');const d=document.getElementById('cl-d');
+    if(!g||!d)return;
+    g.style.display='block';d.style.display='block';
+    setTimeout(()=>{g.style.display='none';d.style.display='none'},120);
   },3000+Math.random()*2000);
   let p=0,up=true;
   setInterval(()=>{
     p=up?p+0.1:p-0.1;if(p>=1)up=false;if(p<=0)up=true;
-    const av=document.getElementById('sav-svg');if(av)av.style.transform=`translateY(${p}px)`;
+    const av=document.getElementById('sav');if(av)av.style.transform=`translateY(${p}px)`;
   },50);
 }
-
 function setSkin(el,c1,c2){
   el.parentElement.querySelectorAll('.copt').forEach(o=>o.classList.remove('on'));el.classList.add('on');
-  document.getElementById('sg-s0').setAttribute('stop-color',c1);
-  document.getElementById('sg-s1').setAttribute('stop-color',c2);
+  document.getElementById('sk0').setAttribute('stop-color',c1);
+  document.getElementById('sk1').setAttribute('stop-color',c2);
 }
-
-function setNike(el,base,accent){
+function setNike(el,base,sw){
   el.parentElement.querySelectorAll('.copt').forEach(o=>o.classList.remove('on'));el.classList.add('on');
-  document.querySelectorAll('[id^="nike-"][id$="-body"]').forEach(e=>e.setAttribute('fill',base));
-  document.querySelectorAll('[id^="nike-"][id$="-sw"]').forEach(e=>e.setAttribute('fill',accent));
+  ['nkg','nkd'].forEach(id=>document.getElementById(id)?.setAttribute('fill',base));
+  ['swg','swd'].forEach(id=>document.getElementById(id)?.setAttribute('fill',sw));
 }
-
 function setShirt(el,c1,c2){
   el.parentElement.querySelectorAll('.copt').forEach(o=>o.classList.remove('on'));el.classList.add('on');
-  document.getElementById('sh-s0').setAttribute('stop-color',c1);
-  document.getElementById('sh-s1').setAttribute('stop-color',c2);
+  document.getElementById('sh0').setAttribute('stop-color',c1);
+  document.getElementById('sh1').setAttribute('stop-color',c2);
 }
-
 function renderRW(){
-  const score=parseInt(document.getElementById('sscore')?.textContent)||0;
-  document.getElementById('rw-grid').innerHTML=RWS.map(r=>{
+  const score=parseInt(document.getElementById('s-sc')?.textContent)||0;
+  document.getElementById('rw-g').innerHTML=RWS.map(r=>{
     const ul=r.ok(score,1,0,80);
-    return`<div class="rwcard ${ul?'ul':'lk'}">
-      <div class="rwicon">${r.icon}</div>
-      <div class="rwlbl">${r.label}</div>
-      <div class="rwreq">${ul?'✓ Débloqué':r.req}</div>
+    return`<div class="rwc ${ul?'ul':'lk'}">
+      <div class="rwi">${r.ic}</div>
+      <div class="rwl">${r.lb}</div>
+      <div class="rwr">${ul?'✓ Débloqué':r.req}</div>
     </div>`;
   }).join('');
 }
 
-// INIT
+// ===== INIT =====
 async function init(){
   const saved=localStorage.getItem('spU');
   if(saved){
     try{
       U=JSON.parse(saved);
-      if(U._type==='staff')await startStaff();
+      if(U._t==='stf')await startStaff();
       else await startDir();
-      document.getElementById('loading').style.display='none';return;
+      document.getElementById('loading').style.display='none';
+      return;
     }catch(e){localStorage.removeItem('spU')}
   }
   document.getElementById('loading').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('login').style.display='flex';
 }
 
 init();
